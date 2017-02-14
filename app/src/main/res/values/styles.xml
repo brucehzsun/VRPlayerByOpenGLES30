@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="ActionBarStyle">
+        <item name="android:layout_height">45dp</item>
+        <item name="android:background">#008dde</item>
+        <item name="android:layout_width">match_parent</item>
+    </style>
+
+    <style name="ActionBar_Item_Back_Style" parent="ActionBar_Item_Style">
+        <item name="android:src">@drawable/actionbar_back_selector</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="ActionBar_Item_Style">
+        <item name="android:layout_centerVertical">true</item>
+        <item name="android:paddingLeft">12dp</item>
+        <item name="android:paddingRight">12dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:scaleType">centerInside</item>
+        <item name="android:layout_gravity">center_vertical</item>
+    </style>
+
+    <style name="ActionBar_Item_text_Style" parent="ActionBar_Item_Style">
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:layout_centerVertical">true</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+</resources>

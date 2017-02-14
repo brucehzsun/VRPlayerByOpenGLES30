@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/video_player_tip_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:visibility="gone"
+    >
+
+    <ImageView
+        android:id="@+id/video_player_dialog_tip_img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/fullvideo_touch_mode_img"/>
+
+    <TextView
+        android:id="@+id/video_player_dialog_tip_text"
+        android:layout_width="160dp"
+        android:layout_height="30dp"
+        android:layout_below="@+id/video_player_dialog_tip_img"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:textColor="#ffffff"
+        android:textSize="16sp"
+        android:background="#b2000000"
+        android:text="@string/full_video_touch_str"
+        />
+
+</RelativeLayout>

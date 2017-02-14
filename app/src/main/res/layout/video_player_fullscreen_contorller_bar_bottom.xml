@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/videoPlayer_ctrlbar_bottom_layout"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    >
+    
+    <SeekBar
+        android:id="@+id/videoPlayer_ctrlbar_seekbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:alpha="0.8"
+        android:background="#000000"
+        android:max="600000"
+        android:maxHeight="4dp"
+        android:minHeight="4dp"
+        android:layout_marginTop="35dp"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp"
+        android:progressDrawable="@drawable/movie_ctrlbar_progress"
+        android:scrollbarSize="16dip"
+        android:thumb="@drawable/movie_ctrlbar_progress_thumb" />
+
+
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="62dip"
+        android:layout_below="@id/videoPlayer_ctrlbar_seekbar"
+        android:background="#cc000000" >
+
+        <!-- 底部左侧控制按钮 -->
+
+        <TextView
+            android:id="@+id/videoPlayer_ctlbar_text_curtime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="2dp"
+            android:textColor="@android:color/white"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/videoPlayer_ctrlbar_text_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_gravity="center_vertical"
+            android:layout_marginRight="10dip"
+            android:layout_marginTop="2dp"
+            android:textColor="@android:color/white"
+            android:textSize="12sp" />
+
+
+
+        <ImageView
+            android:id="@+id/videoPlayer_ctrlbar_btn_playpause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="8dip"
+            android:layout_marginLeft="18dp"
+            android:layout_marginRight="16dp"
+            android:enabled="false"
+            android:src="@drawable/movie_ctrlbar_btn_pause_selector" />
+
+        <!-- 底部右侧按钮 -->
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="8dip"
+            android:layout_marginRight="12dp"
+            >
+            <ImageView
+                android:id="@+id/videoPlayer_ctrlbar_btn_gyro"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/movie_ctrlbar_btn_tly_selector"  />
+
+            <ImageView
+                android:id="@+id/videoPlayer_ctrlbar_btn_glasses"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_marginLeft="30dp"
+                android:layout_toRightOf="@+id/videoPlayer_ctrlbar_btn_gyro"
+                android:visibility="gone"
+                android:src="@drawable/movie_ctrlbar_btn_mj_selector" />
+
+        </RelativeLayout>
+    </RelativeLayout>
+
+</RelativeLayout>
