@@ -7,14 +7,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.media.MediaPlayer;
-import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.MotionEvent;
@@ -31,11 +26,8 @@ import android.widget.ViewFlipper;
 
 import com.baofeng.mojing.MojingSDK;
 import com.baofeng.mojing.MojingSurfaceView;
-import com.baofeng.mojing.MojingVrLib;
 import com.baofeng.mojing.input.base.MojingKeyCode;
 
-import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 
 import bruce.sun.vr.R;
@@ -49,7 +41,7 @@ import bruce.sun.vr.render.VrRender;
 
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 public class VRActivity extends Activity implements RendererListener, OnClickListener,
-        SeekBar.OnSeekBarChangeListener, OnTouchListener {
+        SeekBar.OnSeekBarChangeListener, OnTouchListener, IVRPlayView {
 
     private static final String TAG = "VRActivity";
 
@@ -81,7 +73,6 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
     private static final int ID_MOJING = 1;
 
-    GLMsgHandler handler;
 
     MojingSurfaceView mojingSurfaceView;
 
@@ -97,11 +88,6 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
     ViewFlipper flipper;
 
-    VrRender mojingRenderer;
-
-    MyRenderer myRenderer;
-
-    BaseRenderer curRenderer;
 
     SparseArray<String> keyStateMap = new SparseArray<String>();
 
@@ -115,7 +101,6 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
     private float touchDeltaY;
 
-    private MediaPlayer mMediaPlayer;
 
     private boolean isSeeking;
 
@@ -199,12 +184,14 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
 
     private String palyUrl;
+    private IVRPlayPresenter presenter;
 
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_vr);
+        presenter = new VRPlayPresenter(this);
 
 
         Log.d(TAG, "onCreate");
@@ -223,7 +210,6 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
     }
 
     private void initView() {
-        handler = new GLMsgHandler(this);
         mBackBtn = findViewById(R.id.videoPlayer_ctrlbar_btn_back);
         mShowTipRoot = findViewById(R.id.video_player_tip_root);
         mShowTipImg = (ImageView) findViewById(R.id.video_player_dialog_tip_img);
@@ -250,7 +236,7 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
         mBottomControlView.setOnTouchListener(blockTouchToGlSurface);
         mTopControlView.setOnTouchListener(blockTouchToGlSurface);
-        playerProgressCtrl = new PlayerProgressCtrl(mProgressBarLayout, null, handler);
+        playerProgressCtrl = new PlayerProgressCtrl(mProgressBarLayout, null, null);
         playerProgressCtrl.enableTraceMode(false);
 
         flipper = (ViewFlipper) findViewById(R.id.flipper);
@@ -261,7 +247,7 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         mySurfaceView.setOnTouchListener(this);
 
         MojingSDK.Init(this);
-        selectSurfaceView(ID_MY, true);
+//        selectSurfaceView(ID_MY, true);
     }
 
     private void changeCtrlBarStatus() {
@@ -289,12 +275,8 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         super.onResume();
         isOnResume = true;
         Log.d(TAG, "onResume");
-        startGyroTracking();
-        if (isMojing()) {
-            onResumeMojing();
-        } else {
-            onResumeMy();
-        }
+        presenter.onResume();
+
     }
 
     @Override
@@ -302,34 +284,18 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         super.onPause();
         isOnResume = false;
         Log.d(TAG, "onPause");
-        stopGyroTracking();
-        if (isMojing()) {
-            onPauseMojing();
-        } else {
-            onPauseMy();
-        }
+        presenter.onPause();
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "onDestroy");
-        if (mMediaPlayer != null) {
-            mMediaPlayer.stop();
-            mMediaPlayer.release();
-        }
-        if (handler != null) {
-            handler.removeCallbacksAndMessages(null);
-        }
+        presenter.onDestory();
     }
 
-    public void onChangeMojingWorld() {
-        float fov = com.baofeng.mojing.MojingSDK.GetMojingWorldFOV() / 2.f;
-        float ratio = (float) Math.tan(Math.toRadians(fov));
-        mojingRenderer.getMatrixState().setProjectFrustum(-ratio, ratio, -ratio, ratio, 1.f, 800);
-    }
 
-    private boolean isMojing() {
+    public boolean isMojing() {
         int curId = flipper.getDisplayedChild();
         if (curId == ID_MOJING) {
             return true;
@@ -346,13 +312,6 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         }
     }
 
-    private BaseRenderer getRenderer() {
-        if (isMojing()) {
-            return mojingRenderer;
-        } else {
-            return myRenderer;
-        }
-    }
 
     private void initMojingSDK() {
         if (isMojingSDKInited) {
@@ -362,70 +321,6 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         isMojingSDKInited = true;
     }
 
-    private void selectSurfaceView(int id, boolean isOnCreate) {
-        if (!isOnCreate && flipper.getDisplayedChild() == id) {
-            return;
-        }
-        isRendererReady = false;
-        flipper.setDisplayedChild(id);
-        if (isMojing()) {
-            if (!isOnCreate) {
-                myRenderer.onPause();
-                mySurfaceView.onPause();
-            }
-            if (!isMojingInited) {
-                initMojingSDK();
-                mojingRenderer = new VrRender(this, handler);
-                mojingRenderer.setListener(this);
-                mojingSurfaceView.setRenderer(mojingRenderer);
-                mojingSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-                initKeyValues();
-                // MUST INIT glass list first
-                m_ManufacturerList = ManufacturerList.getInstance("zh");
-                // Setup default glass mode
-                mojingSurfaceView
-                        .setGlassesKey(m_ManufacturerList.mManufaturerList.get(0).mProductList
-                                .get(0).mGlassList.get(0).mKey);
-                mojingSurfaceView.setMessageHandler(handler);
-                String support = VrPreferences.getInstance(this).getSupportTimeWarpAndMultiThread();
-                if (TextUtils.isEmpty(support) || support.equals("yes")) {
-                    mojingSurfaceView.setTimeWarp(true);
-                    mojingSurfaceView.setMultiThread(true);
-                    if (TextUtils.isEmpty(support)) { // 未检测过，开启检测
-                        mojingRenderer.setDetectTimeWarpAndMultiThread(true);
-                    }
-                }
-                if (isOnCreate) {
-                    startGyro();
-                }
-                isMojingInited = true;
-            }
-            if (!isOnCreate) {
-                mojingRenderer.onResume();
-                mojingSurfaceView.onResume();
-            }
-        } else {
-            if (!isOnCreate) {
-                mojingRenderer.onPause();
-                mojingSurfaceView.onPause();
-            }
-            if (!isMyInited) {
-                myRenderer = new MyRenderer(this, handler);
-                myRenderer.setListener(this);
-                mySurfaceView.setRenderer(myRenderer);
-                myRenderer.setGlSurfaceView(mySurfaceView, GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-                isMyInited = true;
-            }
-            if (!isOnCreate) {
-                myRenderer.onResume();
-                mySurfaceView.onResume();
-            }
-        }
-        curSurfaceView = getSurfaceView();
-        curRenderer = getRenderer();
-        curSurfaceView.requestFocus();
-        curRenderer.setSemiSphere(isSemiSphere);
-    }
 
     private void initKeyValues() {
         try {
@@ -450,48 +345,19 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         return super.onTouchEvent(event);
     }
 
-    private void onPauseMojing() {
-        if (!isMojingInited) {
-            return;
-        }
-        MojingVrLib.stopVsync(this);
-        checkPause();
-    }
-
-    private void onPauseMy() {
-        if (!isMyInited) {
-            return;
-        }
-        checkPause();
-    }
-
-    private void onResumeMojing() {
-        if (!isMojingInited) {
-            return;
-        }
-        MojingVrLib.startVsync(this);
-        checkStart();
-    }
-
-    private void onResumeMy() {
-        if (!isMyInited) {
-            return;
-        }
-        checkStart();
-    }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.videoPlayer_ctrlbar_btn_reset:
                 resetTouchPosition();
-                getRenderer().resetScale();
+//                getRenderer().resetScale();
                 break;
             case R.id.videoPlayer_ctrlbar_btn_gyro:
                 if (!isGyroMode) {
-                    startGyroMode();
+//                    startGyroMode();
                 } else {
-                    startTouchMode();
+//                    startTouchMode();
                 }
                 break;
 
@@ -503,11 +369,11 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 //                            FullVideoStatisticUtils.MOJING_DISPLAY_CLICK,
 //                            FullVideoStatisticUtils.STATUS_CLICK);
                 } else {
-                    startTouchMode();
+//                    startTouchMode();
                 }
                 break;
             case R.id.videoPlayer_ctrlbar_btn_playpause:
-                pauseOrPlay();
+//                pauseOrPlay();
                 break;
             case R.id.videoPlayer_ctrlbar_btn_back:
                 onBackEvent();
@@ -515,86 +381,15 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         }
     }
 
-    /**
-     * 开启touch模式
-     */
-    private void startTouchMode() {
-        if (!isTouchMode) {
-            resetModeFlag();
-            isTouchMode = true;
-            mResetBtn.setVisibility(View.VISIBLE);
-            myRenderer.setGlSurfaceView(mySurfaceView, GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-            if (isMojing()) {
-                onPauseMojing();
-                selectSurfaceView(ID_MY, false);
-                onResumeMy();
-            }
-            stopGyro();
-        }
-    }
-
-    /**
-     * 开启Gyro模式
-     */
-    private void startGyroMode() {
-        if (VrPreferences.getInstance(this).isFirstGoryMode()) {
-            showGoryTips();
-            auToHideTip();
-            VrPreferences.getInstance(this).setFirstGoryMode(false);
-        }
-        mResetBtn.setVisibility(View.VISIBLE);
-        resetModeFlag();
-        mGyroModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_tly_down_selector);
-        isGyroMode = true;
-        myRenderer.setGlSurfaceView(mySurfaceView, GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-        if (isMojing()) {
-            onPauseMojing();
-            selectSurfaceView(ID_MY, false);
-            onResumeMy();
-        }
-        startGyro();
-    }
-
-    private void startGlassesMode() {
-        resetModeFlag();
-        mGlassesModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_mj_down_selector);
-        isGlassesMode = true;
-        onPauseMy();
-        selectSurfaceView(ID_MOJING, false);
-        onResumeMojing();
-        startGyro();
-    }
-
-    private void resetModeFlag() {
-        isTouchMode = false;
-        isGyroMode = false;
-        isGlassesMode = false;
-        mGyroModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_tly_selector);
-        mGlassesModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_mj_selector);
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (MSG_REQUEST_CODE == requestCode) {
-            startGlassesMode();
+//            startGlassesMode();
         }
     }
 
-    private void startGyro() {
-        if (curRenderer != null && !curRenderer.isGyroTrackEnabled()) {
-            curRenderer.setGyroTrackEnabled(true);
-            startGyroTracking();
-            MojingSDK.ResetSensorOrientation();
-        }
-    }
-
-    private void stopGyro() {
-        if (curRenderer != null && curRenderer.isGyroTrackEnabled()) {
-            stopGyroTracking();
-            curRenderer.setGyroTrackEnabled(false);
-        }
-    }
 
     private void showTouchTips() {
         mShowTipRoot.setVisibility(View.VISIBLE);
@@ -616,8 +411,8 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
      * 显示3d眼睛模式对话框
      */
     private void showGlassModeDialog() {
-        if (mMediaPlayer.isPlaying()) {
-            pause();
+        if (presenter.isPlaying()) {
+            presenter.pause();
         }
         GlassModeDialog customDialog1 = new GlassModeDialog(this) {
             @Override
@@ -633,225 +428,24 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
             @Override
             public void continuePlay() {
                 this.dismiss();
-                startGlassesMode();
+                presenter.startGlassesMode();
             }
         };
         customDialog1.setCancelable(false);
         customDialog1.show();
     }
 
-    private void pauseOrPlay() {
-        if (mMediaPlayer != null) {
-            if (mMediaPlayer.isPlaying()) {
-                pause();
-            } else {
-                goToStart();
-            }
-        }
-    }
-
-    private void pause() {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.pause();
-            Log.d(TAG, "pause() mMediaPlayer.pause();");
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    mPauseBtn.setImageResource(R.drawable.movie_ctrlbar_btn_play_selector);
-                }
-            });
-            cancleAuToHide();
-        }
-    }
-
-    private void goToStart() {
-        if (mMediaPlayer != null && isOnResume) {
-            mMediaPlayer.start();
-            Log.d(TAG, "goToStart  mMediaPlayer.start();");
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    mPauseBtn.setImageResource(R.drawable.movie_ctrlbar_btn_pause_selector);
-                }
-            });
-            auToHide();
-        }
-    }
-
-    private void startGyroTracking() {
-        if (curRenderer != null && curRenderer.isGyroTrackEnabled()) {
-            initMojingSDK();
-            MojingSDK.StartTracker(100);
-        }
-    }
-
-    private void stopGyroTracking() {
-        if (curRenderer != null && curRenderer.isGyroTrackEnabled()) {
-            initMojingSDK();
-            MojingSDK.StopTracker();
-        }
-    }
 
     @Override
     public void onRendererInit() {
     }
 
-    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     @Override
     public void onRendererReady() {
-        isRendererReady = true;
-        if (mMediaPlayer != null) {
-            mMediaPlayer.setSurface(getRenderer().getSurface());
-        }
-        if (isReady()) {
-            getRenderer().setDefaultBufferSize(mMediaPlayer.getVideoWidth(),
-                    mMediaPlayer.getVideoHeight());
-        }
-        checkStart();
+
     }
 
-    private boolean isReady() {
-        if (mMediaPlayer != null && isPlayerPrepared && isVideoSizeChanged && isRendererReady) {
-            return true;
-        }
-        return false;
-    }
-
-    private boolean checkStart() {
-        if (isReady()) {
-            goToStart();
-            return true;
-        }
-        return false;
-    }
-
-    private boolean checkPause() {
-        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
-            pause();
-            return true;
-        }
-        return false;
-    }
-
-
-    protected void play() {
-        // flipper发生切换时，薪的glsurface会重新创建,导致再次调用play方法
-        if (mMediaPlayer != null) {
-            return;
-        }
-        Log.d(TAG, "创建MediaPlayer");
-        isVideoSizeChanged = false;
-        isPlayerPrepared = false;
-        mMediaPlayer = new MediaPlayer();
-        try {
-            mMediaPlayer.setSurface(getRenderer().getSurface());
-            mMediaPlayer.setDataSource(videoUrl);
-            mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mediaPlayer) {
-                    isPlayerPrepared = true;
-                    getRenderer().setDefaultBufferSize(mMediaPlayer.getVideoWidth(),
-                            mMediaPlayer.getVideoHeight());
-                    if (checkStart()) {
-                        handler.sendEmptyMessageDelayed(MSG_UPDATE_SEEK_BAR, 1000);
-                    }
-                    if (VrPreferences.getInstance(VRActivity.this).isFirstTouchMode()) {
-                        showTouchTips();
-                        auToHideTip();
-                        VrPreferences.getInstance(VRActivity.this).setFirstTouchMode(false);
-                    }
-                    auToHide();
-                    Log.d(TAG, " mMediaPlayer.start();");
-                }
-            });
-            mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                @Override
-                public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
-                    Log.e(TAG, " mMediaPlayer.onError();");
-                    return true;
-                }
-            });
-            mMediaPlayer
-                    .setOnVideoSizeChangedListener(new MediaPlayer.OnVideoSizeChangedListener() {
-                        @Override
-                        public void onVideoSizeChanged(MediaPlayer mediaPlayer, int i, int i1) {
-                            isVideoSizeChanged = true;
-                            if (checkStart()) {
-                                handler.sendEmptyMessageDelayed(MSG_UPDATE_SEEK_BAR, 1000);
-                            }
-                        }
-                    });
-            mMediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
-                // buffer start和buffer end居然也可能不成对出现
-                private boolean isBuffering;
-
-                @Override
-                public boolean onInfo(MediaPlayer mp, int what, int extra) {
-                    switch (what) {
-                        case MediaPlayer.MEDIA_INFO_BUFFERING_START:
-                            if (!isBuffering) {
-                                isBuffering = true;
-                                showProgress(true);
-                            }
-                            break;
-
-                        case MediaPlayer.MEDIA_INFO_BUFFERING_END:
-                            if (isBuffering) {
-                                isBuffering = false;
-                                showProgress(false);
-                            }
-                            break;
-
-                        default:
-                            break;
-                    }
-                    return true;
-                }
-            });
-            mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
-                @Override
-                public void onSeekComplete(MediaPlayer mp) {
-                    // 没调用seekTo方法，居然也有可能收到onSeekComplete,无语中
-                    if (isSeeking) {
-                        isSeeking = false;
-                        showProgress(false);
-                    }
-                }
-            });
-            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    try {
-                        mMediaPlayer.stop();
-                    } catch (IllegalStateException e) {
-                        e.printStackTrace();
-                    }
-                    mMediaPlayer.release();
-                    mMediaPlayer = null;
-                    finish();
-                }
-            });
-            mMediaPlayer.prepareAsync();
-            Log.d(TAG, "mMediaPlayer prepare");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void updateSeekBar() {
-        if (curRenderer != null) {
-            // mFps.setText(String.format("FPS: %02.1f", curRenderer.getFPS()));
-        }
-
-        handler.removeMessages(MSG_UPDATE_SEEK_BAR);
-        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
-            int curr = mMediaPlayer.getCurrentPosition();
-            int total = mMediaPlayer.getDuration();
-            mSeekBar.setProgress(curr);
-            mSeekBar.setMax(total);
-        }
-        handler.sendEmptyMessageDelayed(MSG_UPDATE_SEEK_BAR, 1000);
-    }
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -861,29 +455,18 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
-        handler.removeMessages(MSG_UPDATE_SEEK_BAR);
+//        handler.removeMessages(MSG_UPDATE_SEEK_BAR);
         cancleAuToHide();
     }
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        seekTo(seekBar.getProgress());
-        handler.sendEmptyMessage(MSG_UPDATE_SEEK_BAR);
-        handler.sendEmptyMessage(MSG_DISMISS_CONTROLLER_BAR);
+        presenter.seekTo(seekBar.getProgress());
+//        handler.sendEmptyMessage(MSG_UPDATE_SEEK_BAR);
+//        handler.sendEmptyMessage(MSG_DISMISS_CONTROLLER_BAR);
         auToHide();
     }
 
-    private void seekTo(int msec) {
-        if (mMediaPlayer == null) {
-            return;
-        }
-        if (!isPlayerPrepared) {
-            return;
-        }
-        isSeeking = true;
-        showProgress(true);
-        mMediaPlayer.seekTo(msec);
-    }
 
     private void showContorlView() {
         cancleAuToHide();
@@ -892,7 +475,7 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         }
         mTopControlView.setVisibility(View.VISIBLE);
         mBottomControlView.setVisibility(View.VISIBLE);
-        handler.sendEmptyMessage(MSG_UPDATE_SEEK_BAR);
+//        handler.sendEmptyMessage(MSG_UPDATE_SEEK_BAR);
 
         // if (Build.VERSION.SDK_INT < 14 ||
         // ViewConfiguration.get(this).hasPermanentMenuKey()) {
@@ -911,7 +494,7 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         mResetBtn.setVisibility(View.GONE);
         mTopControlView.setVisibility(View.GONE);
         mBottomControlView.setVisibility(View.GONE);
-        handler.removeMessages(MSG_UPDATE_SEEK_BAR);
+//        handler.removeMessages(MSG_UPDATE_SEEK_BAR);
 
         if (Build.VERSION.SDK_INT < 14 || ViewConfiguration.get(this).hasPermanentMenuKey()) {
             return;
@@ -929,23 +512,23 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
      * 3秒后自动隐藏控制层
      */
     private void auToHide() {
-        handler.removeMessages(MSG_DISMISS_CONTROLLER_BAR);
-        handler.sendEmptyMessageDelayed(MSG_DISMISS_CONTROLLER_BAR, SHOW_TIME);
+//        handler.removeMessages(MSG_DISMISS_CONTROLLER_BAR);
+//        handler.sendEmptyMessageDelayed(MSG_DISMISS_CONTROLLER_BAR, SHOW_TIME);
     }
 
     /**
      * 3秒后自动隐藏提示
      */
     private void auToHideTip() {
-        handler.removeMessages(MSG_DISMISS_TIP_LAYER);
-        handler.sendEmptyMessageDelayed(MSG_DISMISS_TIP_LAYER, SHOW_TIME);
+//        handler.removeMessages(MSG_DISMISS_TIP_LAYER);
+//        handler.sendEmptyMessageDelayed(MSG_DISMISS_TIP_LAYER, SHOW_TIME);
     }
 
     /**
      * 取消自动隐藏
      */
     private void cancleAuToHide() {
-        handler.removeMessages(MSG_DISMISS_CONTROLLER_BAR);
+//        handler.removeMessages(MSG_DISMISS_CONTROLLER_BAR);
     }
 
     private float getDistance(MotionEvent event) {
@@ -972,13 +555,13 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
                 break;
 
             case MotionEvent.ACTION_UP:
-                getRenderer().scaleEnd();
+//                getRenderer().scaleEnd();
                 float xd = Math.abs(event.getX() - touchStartX);
                 float yd = Math.abs(event.getY() - touchStartY);
                 if (xd < MIN_MOVE_SPAN && yd < MIN_MOVE_SPAN) { // 滑动距离小于阈值,鉴定为单击事件
                     if (touchEventMode == TOUCH_EVENT_MODE_NORMAL) {
-                        handler.removeMessages(UPDATE_VIDEO_TITLEBAR_ISSHOW);
-                        handler.sendEmptyMessageDelayed(UPDATE_VIDEO_TITLEBAR_ISSHOW, 300);
+//                        handler.removeMessages(UPDATE_VIDEO_TITLEBAR_ISSHOW);
+//                        handler.sendEmptyMessageDelayed(UPDATE_VIDEO_TITLEBAR_ISSHOW, 300);
                     }
                 }
                 break;
@@ -991,7 +574,7 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
                     float zoomEndDistance = getDistance(event);
                     if (zoomEndDistance > 10f) {
                         float scale = zoomEndDistance / zoomStartDistance;
-                        getRenderer().setScale(scale, true);
+//                        getRenderer().setScale(scale, true);
                     }
                 } else {
                     float deltaX = x - touchPrevX;
@@ -1002,7 +585,7 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
                     } else {
                         touchDeltaY += deltaY / sDensity * sDamping;
                     }
-                    getRenderer().setTouchData(touchDeltaX, touchDeltaY, true);
+//                    getRenderer().setTouchData(touchDeltaX, touchDeltaY, true);
                 }
                 break;
 
@@ -1025,41 +608,6 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
     }
 
 
-    private static class GLMsgHandler extends Handler {
-        private final WeakReference<VRActivity> mActivity;
-
-        public GLMsgHandler(VRActivity activity) {
-            mActivity = new WeakReference<VRActivity>(activity);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            if (mActivity == null) {
-                return;
-            }
-            VRActivity activity = mActivity.get();
-            if (activity == null) {
-                return;
-            }
-            switch (msg.what) {
-                case MojingSurfaceView.ON_CHANGE_MOJING_WORLD:
-                    activity.onChangeMojingWorld();
-                    break;
-                case MSG_UPDATE_SEEK_BAR:
-                    activity.updateSeekBar();
-                    break;
-                case MSG_DISMISS_CONTROLLER_BAR:
-                    activity.hideContorlView();
-                    break;
-                case UPDATE_VIDEO_TITLEBAR_ISSHOW:
-                    activity.changeCtrlBarStatus();
-                case MSG_DISMISS_TIP_LAYER:
-                    activity.hideTips();
-                    break;
-            }
-        }
-    }
-
     // 归零
     private void resetTouchPosition() {
         touchDeltaX = 0;
@@ -1067,7 +615,7 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         touchPrevX = 0;
         touchPrevY = 0;
         touchEventMode = 0;
-        getRenderer().setTouchData(0, 0, false);
+//        getRenderer().setTouchData(0, 0, false);
     }
 
     @Override
