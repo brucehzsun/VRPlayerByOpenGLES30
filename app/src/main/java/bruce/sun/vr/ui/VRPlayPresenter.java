@@ -7,34 +7,49 @@ import android.os.Handler;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseArray;
+import android.view.SurfaceView;
 import android.view.View;
 
 import com.baofeng.mojing.MojingSDK;
 import com.baofeng.mojing.MojingSurfaceView;
 import com.baofeng.mojing.MojingVrLib;
+import com.baofeng.mojing.input.base.MojingKeyCode;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 
 import bruce.sun.vr.R;
 import bruce.sun.vr.db.VrPreferences;
 import bruce.sun.vr.mojing.ManufacturerList;
 import bruce.sun.vr.render.BaseRenderer;
 import bruce.sun.vr.render.MyRenderer;
+import bruce.sun.vr.render.RendererListener;
 import bruce.sun.vr.render.VrRender;
-
-import static bruce.sun.vr.R.id.mojingSurfaceView;
-import static bruce.sun.vr.R.id.mySurfaceView;
 
 /**
  * Update by sunhongzhi on 2017/2/14.
  */
 
-public class VRPlayPresenter implements IVRPlayPresenter {
+public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
     private static final String TAG = "VRPlayPresenter";
+
+
+    private static final int MSG_UPDATE_SEEK_BAR = 100;
+
+    private static final int MSG_DISMISS_CONTROLLER_BAR = 1001;
+
+    private static final int UPDATE_VIDEO_TITLEBAR_ISSHOW = 1002;
+
+    private static final int MSG_DISMISS_TIP_LAYER = 1004;
+
+
     private final Activity activity;
 
     private MediaPlayer mMediaPlayer;
+
+    GLSurfaceView mySurfaceView;
 
     Handler handler;
 
@@ -45,12 +60,35 @@ public class VRPlayPresenter implements IVRPlayPresenter {
 
     BaseRenderer curRenderer;
 
+    boolean isMojingInited = false;
+
+    MojingSurfaceView mojingSurfaceView;
+
+    private ManufacturerList m_ManufacturerList;
+
+    private IVRPlayView ivrPlayView;
+
+    boolean isMyInited = false;
+
+    SurfaceView curSurfaceView;
+
+    private boolean isSemiSphere = false; // 2016-03-22
+    // 是否180度全景视频(画面只有360全景视频的前半边,后半边为黑色背景)
+
+    private boolean isTouchMode;
+
+    private boolean isGyroMode;
+
+    private boolean isGlassesMode;
+    private boolean isMojingSDKInited;
+    SparseArray<String> keyStateMap = new SparseArray<String>();
+
+    SparseArray<String> axisStateMap = new SparseArray<String>();
+
     public VRPlayPresenter(IVRPlayView ivrPlayView) {
         activity = (Activity) ivrPlayView;
         this.ivrPlayView = ivrPlayView;
     }
-
-    private IVRPlayView ivrPlayView;
 
     protected void play(String videoUrl) {
         // flipper发生切换时，薪的glsurface会重新创建,导致再次调用play方法
@@ -252,7 +290,7 @@ public class VRPlayPresenter implements IVRPlayPresenter {
             }
             if (!isMojingInited) {
                 initMojingSDK();
-                mojingRenderer = new VrRender(this, handler);
+                mojingRenderer = new VrRender(activity, handler);
                 mojingRenderer.setListener(this);
                 mojingSurfaceView.setRenderer(mojingRenderer);
                 mojingSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
@@ -264,7 +302,7 @@ public class VRPlayPresenter implements IVRPlayPresenter {
                         .setGlassesKey(m_ManufacturerList.mManufaturerList.get(0).mProductList
                                 .get(0).mGlassList.get(0).mKey);
                 mojingSurfaceView.setMessageHandler(handler);
-                String support = VrPreferences.getInstance(this).getSupportTimeWarpAndMultiThread();
+                String support = VrPreferences.getInstance(activity).getSupportTimeWarpAndMultiThread();
                 if (TextUtils.isEmpty(support) || support.equals("yes")) {
                     mojingSurfaceView.setTimeWarp(true);
                     mojingSurfaceView.setMultiThread(true);
@@ -287,7 +325,7 @@ public class VRPlayPresenter implements IVRPlayPresenter {
                 mojingSurfaceView.onPause();
             }
             if (!isMyInited) {
-                myRenderer = new MyRenderer(this, handler);
+                myRenderer = new MyRenderer(activity, handler);
                 myRenderer.setListener(this);
                 mySurfaceView.setRenderer(myRenderer);
                 myRenderer.setGlSurfaceView(mySurfaceView, GLSurfaceView.RENDERMODE_WHEN_DIRTY);
@@ -309,7 +347,7 @@ public class VRPlayPresenter implements IVRPlayPresenter {
         if (!isMojingInited) {
             return;
         }
-        MojingVrLib.stopVsync(this);
+        MojingVrLib.stopVsync(activity);
         checkPause();
     }
 
@@ -324,7 +362,7 @@ public class VRPlayPresenter implements IVRPlayPresenter {
         if (!isMojingInited) {
             return;
         }
-        MojingVrLib.startVsync(this);
+        MojingVrLib.startVsync(activity);
         checkStart();
     }
 
@@ -342,11 +380,11 @@ public class VRPlayPresenter implements IVRPlayPresenter {
         if (!isTouchMode) {
             resetModeFlag();
             isTouchMode = true;
-            mResetBtn.setVisibility(View.VISIBLE);
+//            mResetBtn.setVisibility(View.VISIBLE);
             myRenderer.setGlSurfaceView(mySurfaceView, GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-            if (isMojing()) {
+            if (ivrPlayView.isMojing()) {
                 onPauseMojing();
-                selectSurfaceView(ID_MY, false);
+                selectSurfaceView(Constant.ID_MY, false);
                 onResumeMy();
             }
             stopGyro();
@@ -358,30 +396,31 @@ public class VRPlayPresenter implements IVRPlayPresenter {
      * 开启Gyro模式
      */
     private void startGyroMode() {
-        if (VrPreferences.getInstance(this).isFirstGoryMode()) {
-            showGoryTips();
-            auToHideTip();
-            VrPreferences.getInstance(this).setFirstGoryMode(false);
+        if (VrPreferences.getInstance(activity).isFirstGoryMode()) {
+            ivrPlayView.showGoryTips();
+            ivrPlayView.auToHideTip();
+            VrPreferences.getInstance(activity).setFirstGoryMode(false);
         }
-        mResetBtn.setVisibility(View.VISIBLE);
+//        mResetBtn.setVisibility(View.VISIBLE);
         resetModeFlag();
-        mGyroModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_tly_down_selector);
+//        mGyroModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_tly_down_selector);
         isGyroMode = true;
         myRenderer.setGlSurfaceView(mySurfaceView, GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-        if (isMojing()) {
+        if (ivrPlayView.isMojing()) {
             onPauseMojing();
-            selectSurfaceView(ID_MY, false);
+            selectSurfaceView(Constant.ID_MY, false);
             onResumeMy();
         }
         startGyro();
     }
 
-    private void startGlassesMode() {
+    @Override
+    public void startGlassesMode() {
         resetModeFlag();
-        mGlassesModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_mj_down_selector);
+//        mGlassesModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_mj_down_selector);
         isGlassesMode = true;
         onPauseMy();
-        selectSurfaceView(ID_MOJING, false);
+        selectSurfaceView(Constant.ID_MOJING, false);
         onResumeMojing();
         startGyro();
     }
@@ -389,7 +428,7 @@ public class VRPlayPresenter implements IVRPlayPresenter {
     @Override
     public void onResume() {
         startGyroTracking();
-        if (isMojing()) {
+        if (ivrPlayView.isMojing()) {
             onResumeMojing();
         } else {
             onResumeMy();
@@ -399,7 +438,7 @@ public class VRPlayPresenter implements IVRPlayPresenter {
     @Override
     public void onPause() {
         stopGyroTracking();
-        if (isMojing()) {
+        if (ivrPlayView.isMojing()) {
             onPauseMojing();
         } else {
             onPauseMy();
@@ -410,8 +449,8 @@ public class VRPlayPresenter implements IVRPlayPresenter {
         isTouchMode = false;
         isGyroMode = false;
         isGlassesMode = false;
-        mGyroModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_tly_selector);
-        mGlassesModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_mj_selector);
+//        mGyroModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_tly_selector);
+//        mGlassesModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_mj_selector);
     }
 
     public void onChangeMojingWorld() {
@@ -421,7 +460,7 @@ public class VRPlayPresenter implements IVRPlayPresenter {
     }
 
     private BaseRenderer getRenderer() {
-        if (isMojing()) {
+        if (ivrPlayView.isMojing()) {
             return mojingRenderer;
         } else {
             return myRenderer;
@@ -457,6 +496,72 @@ public class VRPlayPresenter implements IVRPlayPresenter {
         }
     }
 
+    private SurfaceView getSurfaceView() {
+        if (ivrPlayView.isMojing()) {
+            return mojingSurfaceView;
+        } else {
+            return mySurfaceView;
+        }
+    }
+
+    private void initMojingSDK() {
+        if (isMojingSDKInited) {
+            return;
+        }
+        MojingSDK.Init(activity);
+        isMojingSDKInited = true;
+    }
+
+    private void initKeyValues() {
+        try {
+            Field fields[] = MojingKeyCode.class.getFields();
+            for (int i = 0; i < fields.length; i++) {
+                String fieldName = fields[i].getName();
+                if (fieldName.startsWith("KEYCODE")) {
+                    keyStateMap.put(fields[i].getInt(null), fieldName);
+                } else if (fieldName.startsWith("AXIS")) {
+                    axisStateMap.put(fields[i].getInt(null), fieldName);
+                }
+            }
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onRendererInit() {
+    }
+    @Override
+    public void onSwitchModeStart() {
+        // 切换模式开始
+        ivrPlayView.showProgress(true);
+    }
+
+    @Override
+    public void onSwitchModeEnd() {
+        // 切换模式结束
+        ivrPlayView.showProgress(false);
+    }
+    @Override
+    public void onDetectTimeWarpAndMultiThread(boolean isSupported) {
+        if (!ivrPlayView.isMojing()) {
+            return;
+        }
+        // 本设备不支持TimeWarp和多线程反畸变
+        if (isSupported) {
+            VrPreferences.getInstance(activity).setSupportTimeWarpAndMultiThread("yes");
+            return;
+        }
+        VrPreferences.getInstance(activity).setSupportTimeWarpAndMultiThread("no");
+//        flipper.setDisplayedChild(Constant.ID_MY);
+        mojingSurfaceView.setTimeWarp(false);
+        mojingSurfaceView.setMultiThread(false);
+//        flipper.setDisplayedChild(Constant.ID_MOJING);
+    }
+
+
     private static class MyHandler extends Handler {
         private final WeakReference<VRPlayPresenter> mActivity;
 
@@ -478,15 +583,15 @@ public class VRPlayPresenter implements IVRPlayPresenter {
                     activity.onChangeMojingWorld();
                     break;
                 case MSG_UPDATE_SEEK_BAR:
-                    activity.updateSeekBar();
+//                    activity.updateSeekBar();
                     break;
                 case MSG_DISMISS_CONTROLLER_BAR:
-                    activity.hideContorlView();
+//                    activity.hideContorlView();
                     break;
                 case UPDATE_VIDEO_TITLEBAR_ISSHOW:
-                    activity.changeCtrlBarStatus();
+//                    activity.changeCtrlBarStatus();
                 case MSG_DISMISS_TIP_LAYER:
-                    activity.hideTips();
+//                    activity.hideTips();
                     break;
             }
         }

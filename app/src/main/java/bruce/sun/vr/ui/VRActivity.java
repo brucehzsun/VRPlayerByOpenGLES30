@@ -40,20 +40,14 @@ import bruce.sun.vr.render.VrRender;
 
 
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-public class VRActivity extends Activity implements RendererListener, OnClickListener,
+public class VRActivity extends Activity implements OnClickListener,
         SeekBar.OnSeekBarChangeListener, OnTouchListener, IVRPlayView {
 
     private static final String TAG = "VRActivity";
 
-    private static final int MSG_UPDATE_SEEK_BAR = 100;
-
-    private static final int MSG_DISMISS_CONTROLLER_BAR = 1001;
-
-    private static final int UPDATE_VIDEO_TITLEBAR_ISSHOW = 1002;
 
     private static final int MSG_REQUEST_CODE = 1000;
 
-    private static final int MSG_DISMISS_TIP_LAYER = 1004;
 
     private static final int SHOW_TIME = 5000;// 3000;
 
@@ -69,29 +63,9 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
     private String curCachingP2PPath;
 
-    private static final int ID_MY = 0;
-
-    private static final int ID_MOJING = 1;
-
-
-    MojingSurfaceView mojingSurfaceView;
-
-    GLSurfaceView mySurfaceView;
-
-    SurfaceView curSurfaceView;
-
-    boolean isMyInited = false;
-
-    boolean isMojingInited = false;
-
-    private ManufacturerList m_ManufacturerList;
 
     ViewFlipper flipper;
 
-
-    SparseArray<String> keyStateMap = new SparseArray<String>();
-
-    SparseArray<String> axisStateMap = new SparseArray<String>();
 
     private float touchPrevX;
 
@@ -124,11 +98,6 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
     private SeekBar mSeekBar;
 
-    private boolean isTouchMode;
-
-    private boolean isGyroMode;
-
-    private boolean isGlassesMode;
 
     private ImageView mPauseBtn;
 
@@ -152,7 +121,6 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
     private boolean isOnResume;
 
-    private boolean isMojingSDKInited;
 
     int touchEventMode;
 
@@ -179,12 +147,10 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
     private int MIN_MOVE_SPAN; // 区分滑屏和点击的距离阈值
 
-    private boolean isSemiSphere = false; // 2016-03-22
-    // 是否180度全景视频(画面只有360全景视频的前半边,后半边为黑色背景)
-
 
     private String palyUrl;
     private IVRPlayPresenter presenter;
+    private MojingSurfaceView mojingSurfaceView;
 
     @Override
     protected void onCreate(Bundle icicle) {
@@ -240,8 +206,8 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         playerProgressCtrl.enableTraceMode(false);
 
         flipper = (ViewFlipper) findViewById(R.id.flipper);
-        mojingSurfaceView = (MojingSurfaceView) flipper.getChildAt(ID_MOJING);
-        mySurfaceView = (GLSurfaceView) flipper.getChildAt(ID_MY);
+        mojingSurfaceView = (MojingSurfaceView) flipper.getChildAt(Constant.ID_MOJING);
+        GLSurfaceView mySurfaceView = (GLSurfaceView) flipper.getChildAt(Constant.ID_MY);
         mySurfaceView.setEGLContextClientVersion(2);
         mojingSurfaceView.setOnTouchListener(this);
         mySurfaceView.setOnTouchListener(this);
@@ -297,48 +263,13 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
     public boolean isMojing() {
         int curId = flipper.getDisplayedChild();
-        if (curId == ID_MOJING) {
+        if (curId == Constant.ID_MOJING) {
             return true;
         } else {
             return false;
         }
     }
 
-    private SurfaceView getSurfaceView() {
-        if (isMojing()) {
-            return mojingSurfaceView;
-        } else {
-            return mySurfaceView;
-        }
-    }
-
-
-    private void initMojingSDK() {
-        if (isMojingSDKInited) {
-            return;
-        }
-        MojingSDK.Init(this);
-        isMojingSDKInited = true;
-    }
-
-
-    private void initKeyValues() {
-        try {
-            Field fields[] = MojingKeyCode.class.getFields();
-            for (int i = 0; i < fields.length; i++) {
-                String fieldName = fields[i].getName();
-                if (fieldName.startsWith("KEYCODE")) {
-                    keyStateMap.put(fields[i].getInt(null), fieldName);
-                } else if (fieldName.startsWith("AXIS")) {
-                    axisStateMap.put(fields[i].getInt(null), fieldName);
-                }
-            }
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        }
-    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -354,23 +285,23 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 //                getRenderer().resetScale();
                 break;
             case R.id.videoPlayer_ctrlbar_btn_gyro:
-                if (!isGyroMode) {
+//                if (!isGyroMode) {
 //                    startGyroMode();
-                } else {
+//                } else {
 //                    startTouchMode();
-                }
+//                }
                 break;
 
             case R.id.videoPlayer_ctrlbar_btn_glasses:
-                if (!isGlassesMode) {
-                    mResetBtn.setVisibility(View.GONE);
-                    showGlassModeDialog();
+//                if (!isGlassesMode) {
+//                    mResetBtn.setVisibility(View.GONE);
+//                    showGlassModeDialog();
 //                    FullVideoStatisticUtils.mojingCount(this,
 //                            FullVideoStatisticUtils.MOJING_DISPLAY_CLICK,
 //                            FullVideoStatisticUtils.STATUS_CLICK);
-                } else {
+//                } else {
 //                    startTouchMode();
-                }
+//                }
                 break;
             case R.id.videoPlayer_ctrlbar_btn_playpause:
 //                pauseOrPlay();
@@ -395,7 +326,8 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         mShowTipRoot.setVisibility(View.VISIBLE);
     }
 
-    private void showGoryTips() {
+    @Override
+    public void showGoryTips() {
         mShowTipRoot.setVisibility(View.VISIBLE);
         mShowTipImg.setImageResource(R.drawable.fullvideo_gory_mode_img);
         mShowTipText.setText(getString(R.string.full_video_gory_str));
@@ -436,15 +368,6 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
     }
 
 
-    @Override
-    public void onRendererInit() {
-    }
-
-    @Override
-    public void onRendererReady() {
-
-    }
-
     @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 
     @Override
@@ -470,9 +393,9 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
     private void showContorlView() {
         cancleAuToHide();
-        if (!isGlassesMode) {
-            mResetBtn.setVisibility(View.VISIBLE);
-        }
+//        if (!isGlassesMode) {
+//            mResetBtn.setVisibility(View.VISIBLE);
+//        }
         mTopControlView.setVisibility(View.VISIBLE);
         mBottomControlView.setVisibility(View.VISIBLE);
 //        handler.sendEmptyMessage(MSG_UPDATE_SEEK_BAR);
@@ -519,7 +442,8 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
     /**
      * 3秒后自动隐藏提示
      */
-    private void auToHideTip() {
+    @Override
+    public void auToHideTip() {
 //        handler.removeMessages(MSG_DISMISS_TIP_LAYER);
 //        handler.sendEmptyMessageDelayed(MSG_DISMISS_TIP_LAYER, SHOW_TIME);
     }
@@ -618,19 +542,9 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 //        getRenderer().setTouchData(0, 0, false);
     }
 
-    @Override
-    public void onSwitchModeStart() {
-        // 切换模式开始
-        showProgress(true);
-    }
 
     @Override
-    public void onSwitchModeEnd() {
-        // 切换模式结束
-        showProgress(false);
-    }
-
-    private void showProgress(boolean isShow) {
+    public void showProgress(boolean isShow) {
         playerProgressCtrl.showProgress(isShow);
     }
 
@@ -645,22 +559,6 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         finish();
     }
 
-    @Override
-    public void onDetectTimeWarpAndMultiThread(boolean isSupported) {
-        if (!isMojing()) {
-            return;
-        }
-        // 本设备不支持TimeWarp和多线程反畸变
-        if (isSupported) {
-            VrPreferences.getInstance(this).setSupportTimeWarpAndMultiThread("yes");
-            return;
-        }
-        VrPreferences.getInstance(this).setSupportTimeWarpAndMultiThread("no");
-        flipper.setDisplayedChild(ID_MY);
-        mojingSurfaceView.setTimeWarp(false);
-        mojingSurfaceView.setMultiThread(false);
-        flipper.setDisplayedChild(ID_MOJING);
-    }
 
     private View.OnTouchListener blockTouchToGlSurface = new View.OnTouchListener() {
         @SuppressLint("ClickableViewAccessibility")

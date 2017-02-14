@@ -6,4 +6,10 @@ package bruce.sun.vr.ui;
 
 public interface IVRPlayView {
     boolean isMojing();
+
+    void showGoryTips();
+
+    void auToHideTip();
+
+    void showProgress(boolean b);
 }
