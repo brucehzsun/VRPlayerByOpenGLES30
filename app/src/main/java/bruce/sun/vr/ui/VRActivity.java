@@ -177,19 +177,10 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
     private float zoomStartDistance;
 
-    private boolean isRendererInited;
-
-    private boolean isGetVideoUrlSuccess;
-
     private String videoUrl;
 
     private PlayerProgressCtrl playerProgressCtrl;
 
-    private int playStartPosition; // 播放记忆点
-
-    private String mBaseUrl;
-
-    private String mVideoFrom;
 
     private String mFullVideoTitle;
 
@@ -206,27 +197,16 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
     private boolean isSemiSphere = false; // 2016-03-22
     // 是否180度全景视频(画面只有360全景视频的前半边,后半边为黑色背景)
 
-    private View.OnTouchListener blockTouchToGlSurface = new View.OnTouchListener() {
-        @SuppressLint("ClickableViewAccessibility")
-        @Override
-        public boolean onTouch(View v, MotionEvent event) {
-            switch (v.getId()) {
-                case R.id.videoPlayer_controlBar_top_layout:
-                case R.id.videoPlayer_ctrlbar_bottom_layout:
-                    // 当用户本身已经在操作控制层时，控制层的隐藏时间应该重新计算
-                    showContorlView();
-                    break;
-            }
-            // 禁止控制层的触屏消息透传到GlSurfaceView引起画面旋转
-            return true;
-        }
-    };
+
+    private String palyUrl;
 
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_vr);
+
+
         Log.d(TAG, "onCreate");
         BaseRenderer.reset();
         MIN_MOVE_SPAN = Dp2Px(this, 20);
@@ -235,66 +215,11 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
     }
 
     private void initData() {
-        mBaseUrl = "http://192.168.90.43/minfo.php?aid=9390299&seq=1&package=com.storm.smart&platf=android&mtype=normal&g=23&ver=6.0.01&td=0&s=F98478740A13589B0BB436500EDD927E5188E499";
-        getIntentData();
-        if (isShowMojingBtn) {
-            mGlassesModeBtn.setVisibility(View.VISIBLE);
-        }
-        mTitle.setText(mFullVideoTitle);
-        // 测试关联播放
-        boolean test_assoc = true;
-        isTouchMode = true;
-        if (test_assoc) {
-            Uri uri = getIntent().getData();
-            // 关联播放只处理绝对路径的视频文件
-            if (uri != null && "file".equals(uri.getScheme()) && uri.isAbsolute()) {
-                isGetVideoUrlSuccess = true;
-                videoUrl = uri.toString();
-                return;
-            }
-        }
-        if (!isLive) {
-//            videoUrl = "http://127.0.0.1:" + P2P.P2P_LIVE_PLAY_PORT;
-//            GetP2pStringTask task = new GetP2pStringTask(this, mBaseUrl, this);
-//            task.execute();
-        } else {
-//            videoUrl = "http://127.0.0.1:" + P2P.P2P_LIVE_PLAY_PORT + "/live.m3u8";
-//            p2pManager = P2P.getInstance(this);
-//            p2pManager.init(getApplicationContext(),
-//                    P2pUtils.getP2PDownloadInitPath(getApplicationContext()),
-//                    P2pUtils.getP2pDownloadPath(getApplicationContext()));
-//            startP2PLive(mBaseUrl);
-            isGetVideoUrlSuccess = true;
-        }
+        palyUrl = getIntent().getStringExtra("PlayUrl");
     }
 
     private boolean isP2PLive() {
         return isLive;
-    }
-
-
-    private void getIntentData() {
-        Intent intent = getIntent();
-        if (intent == null || intent.getExtras() == null) {
-            return;
-        }
-        Bundle bundle = intent.getExtras();
-        mBaseUrl = bundle.getString(PARAM_URL);
-        mVideoFrom = bundle.getString(PARAM_FROM);
-        mFullVideoTitle = bundle.getString(PARAM_TITLE);
-        isLive = bundle.getBoolean(PARAM_LIVE, false);
-        String[] mojingInfo = bundle.getStringArray(PARAM_MOJING_INFO);
-        if (mojingInfo != null && mojingInfo.length != 0) {
-            if (mojingInfo.length > 0) {
-                final String SYN_SHOW = "1";
-                String switchInfo = TextUtils.isEmpty(mojingInfo[0]) ? SYN_SHOW : mojingInfo[0];
-                isShowMojingBtn = SYN_SHOW.equals(switchInfo) ? true : false;
-            }
-            if (mojingInfo.length > 1) {
-//                mMojingBuyUrl = TextUtils.isEmpty(mojingInfo[1]) ? UrlHelper.MOJING_BUY_URL
-//                        : mojingInfo[1];
-            }
-        }
     }
 
     private void initView() {
@@ -441,7 +366,6 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         if (!isOnCreate && flipper.getDisplayedChild() == id) {
             return;
         }
-        isRendererInited = false;
         isRendererReady = false;
         flipper.setDisplayedChild(id);
         if (isMojing()) {
@@ -770,7 +694,6 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
 
     @Override
     public void onRendererInit() {
-        isRendererInited = true;
     }
 
     @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
@@ -1190,4 +1113,20 @@ public class VRActivity extends Activity implements RendererListener, OnClickLis
         mojingSurfaceView.setMultiThread(false);
         flipper.setDisplayedChild(ID_MOJING);
     }
+
+    private View.OnTouchListener blockTouchToGlSurface = new View.OnTouchListener() {
+        @SuppressLint("ClickableViewAccessibility")
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            switch (v.getId()) {
+                case R.id.videoPlayer_controlBar_top_layout:
+                case R.id.videoPlayer_ctrlbar_bottom_layout:
+                    // 当用户本身已经在操作控制层时，控制层的隐藏时间应该重新计算
+                    showContorlView();
+                    break;
+            }
+            // 禁止控制层的触屏消息透传到GlSurfaceView引起画面旋转
+            return true;
+        }
+    };
 }
