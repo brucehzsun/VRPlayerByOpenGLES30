@@ -96,6 +96,14 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
     public SphereRender(GLSurfaceView glSurfaceView) {
         this.context = glSurfaceView.getContext().getApplicationContext();
         this.glSurfaceView = glSurfaceView;
+
+    }
+
+    @Override
+    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        Log.i(TAG, "onSurfaceCreated");
+        reset();
+
         if (glSurfaceView.getRenderMode() == GLSurfaceView.RENDERMODE_WHEN_DIRTY) {
             isRenderWhenDirty = true;
             if (isFrameAvailable) {
@@ -104,12 +112,6 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
         } else {
             isRenderWhenDirty = false;
         }
-    }
-
-    @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        Log.i(TAG, "onSurfaceCreated");
-        reset();
 
 //                    listener.onRendererInit();
 //                    listener.onSwitchModeStart();

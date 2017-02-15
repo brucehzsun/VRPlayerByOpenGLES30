@@ -62,13 +62,10 @@ public class VRActivity extends Activity implements OnTouchListener, IVRPlayView
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+        Log.d(TAG, "onCreate");
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_vr);
         presenter = new VRPlayPresenter(this);
-
-
-        Log.d(TAG, "onCreate");
-        BaseRenderer.reset();
         MIN_MOVE_SPAN = VrUtils.dp2Px(this, 20);
         initView();
         playUrl = getIntent().getStringExtra("PlayUrl");
@@ -79,8 +76,6 @@ public class VRActivity extends Activity implements OnTouchListener, IVRPlayView
 //        flipper = (ViewFlipper) findViewById(R.id.flipper);
 //        mojingSurfaceView = (MojingSurfaceView) flipper.getChildAt(Constant.ID_MOJING);
         mySurfaceView = (VRGLSurfaceView) findViewById(R.id.mySurfaceView);//.getChildAt(Constant.ID_MY);
-        mySurfaceView.setEGLContextClientVersion(2);
-//        mojingSurfaceView.setOnTouchListener(this);
         mySurfaceView.setOnTouchListener(this);
         presenter.setGLSurfaceView(mySurfaceView);
 
@@ -107,7 +102,7 @@ public class VRActivity extends Activity implements OnTouchListener, IVRPlayView
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        presenter.onDestory();
+        presenter.onDestroy();
     }
 
 

@@ -92,7 +92,7 @@ public abstract class BaseRenderer implements GLSurfaceView.Renderer, OnFrameAva
 
     }
 
-    public static void reset() {
+    public void reset() {
         isGyroTrackEnabled = false;
         touchX = 0;
         touchY = 0;
