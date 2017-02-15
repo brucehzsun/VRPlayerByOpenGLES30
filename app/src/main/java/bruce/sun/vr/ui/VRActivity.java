@@ -170,10 +170,10 @@ public class VRActivity extends Activity implements OnClickListener,
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.videoPlayer_ctrlbar_btn_reset:
-                resetTouchPosition();
-//                getRenderer().resetScale();
-                break;
+//            case R.id.videoPlayer_ctrlbar_btn_reset:
+//                resetTouchPosition();
+////                getRenderer().resetScale();
+//                break;
             case R.id.videoPlayer_ctrlbar_btn_gyro:
 //                if (!isGyroMode) {
 //                    startGyroMode();

@@ -431,22 +431,22 @@ public class VRPlayPresenter implements IVRPlayPresenter, MediaPlayer.OnPrepared
     public void onResume() {
         glSurfaceView.onResume();
 //        startGyroTracking();
-        if (ivrPlayView.isMojing()) {
-            onResumeMojing();
-        } else {
+//        if (ivrPlayView.isMojing()) {
+//            onResumeMojing();
+//        } else {
             onResumeMy();
-        }
+//        }
     }
 
     @Override
     public void onPause() {
         glSurfaceView.onPause();
 //        stopGyroTracking();
-        if (ivrPlayView.isMojing()) {
-            onPauseMojing();
-        } else {
+//        if (ivrPlayView.isMojing()) {
+//            onPauseMojing();
+//        } else {
             onPauseMy();
-        }
+//        }
     }
 
 
