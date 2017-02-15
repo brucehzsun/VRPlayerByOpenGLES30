@@ -423,6 +423,13 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
         scaleRatioPrev = scaleRatio;
     }
 
+    public void setSensorChanged(float upx, float upy) {
+//        matrixState.updateCamera(upx,upy);
+        matrixState.setCamera(0, 0, 0,
+                0f, 0.0f, -0.1f,
+                upx, upy, 0.0f);
+    }
+
 //    public void resetScale() {
 //        scaleRatioPrev = 0f;
 //        setScale(1f, false);

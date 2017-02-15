@@ -1,6 +1,9 @@
 package bruce.sun.vr.ui;
 
 import android.app.Activity;
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.media.MediaPlayer;
 import android.util.Log;
 
@@ -29,6 +32,8 @@ public class VRPlayPresenter implements IVRPlayPresenter, MediaPlayer.OnPrepared
     public VRPlayPresenter(IVRPlayView ivrPlayView) {
         context = (Activity) ivrPlayView;
         this.ivrPlayView = ivrPlayView;
+
+
     }
 
 
@@ -95,7 +100,7 @@ public class VRPlayPresenter implements IVRPlayPresenter, MediaPlayer.OnPrepared
 
     @Override
     public void setTouchData(int touchDeltaX, int touchDeltaY, boolean b) {
-        glSurfaceView.setTouchData(touchDeltaX,touchDeltaY,b);
+        glSurfaceView.setTouchData(touchDeltaX, touchDeltaY, b);
     }
 
     @Override

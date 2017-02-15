@@ -171,4 +171,5 @@ public class MatrixState {
         lightPositionFB.put(lightLocation);
         lightPositionFB.position(0);
     }
+
 }
