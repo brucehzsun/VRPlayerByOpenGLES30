@@ -96,7 +96,7 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
     public SphereRender(GLSurfaceView glSurfaceView) {
         this.context = glSurfaceView.getContext().getApplicationContext();
         this.glSurfaceView = glSurfaceView;
-
+        createTexture();
     }
 
     @Override
@@ -115,7 +115,7 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
 
 //                    listener.onRendererInit();
 //                    listener.onSwitchModeStart();
-        createTexture();
+
         if (isSemiSphere) {
             sphere = new SemiSphereModel(matrixState, SPHERE_RADIUS);
         } else {
@@ -140,13 +140,12 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        // Log.i(TAG, "onDrawFrame,frameAvailable:" + frameAvailable +
-        // ",this:" + this);
         boolean isSwitchModeEnd = false;
         synchronized (lock) {
             if (isFrameAvailable) {
                 surfaceTexture.updateTexImage();
                 isFrameAvailable = false;
+                Log.i(TAG, "onDrawFrame,frameAvailable:" + isFrameAvailable);
                 if (frames < SWITCH_MODE_END_FRAMES) {
                     frames += 1;
                     isSwitchModeEnd = (frames == SWITCH_MODE_END_FRAMES);
@@ -156,13 +155,13 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
         }
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
         matrixState.pushMatrix();
-        if (isGyroTrackEnabled) {
-            if (fM == null) {
-                fM = new float[16];
-            }
-            com.baofeng.mojing.MojingSDK.getLastHeadView(fM);
-            matrixState.setViewMatrix(fM);
-        }
+//        if (isGyroTrackEnabled) {
+//            if (fM == null) {
+//                fM = new float[16];
+//            }
+//            com.baofeng.mojing.MojingSDK.getLastHeadView(fM);
+//            matrixState.setViewMatrix(fM);
+//        }
         rotateByTouch();
         sphere.drawSelf(textures[0]);
         matrixState.popMatrix();
@@ -174,8 +173,10 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
         synchronized (lock) {
+            Log.d(TAG, ">> nFrameAvailable lock, isRenderWhenDirty = " + isRenderWhenDirty + ",isTmpRenderContinuously = " + isTmpRenderContinuously);
             isFrameAvailable = true;
             if (isRenderWhenDirty && !isTmpRenderContinuously) {
+                Log.d(TAG, ">> >> nFrameAvailable requestRender");
                 glSurfaceView.requestRender();
             }
         }
