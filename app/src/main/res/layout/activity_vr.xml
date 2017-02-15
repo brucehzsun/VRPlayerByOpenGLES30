@@ -4,51 +4,46 @@
     android:layout_height="match_parent"
     android:background="#000000">
 
-    <ViewFlipper
-        android:id="@+id/flipper"
+
+    <bruce.sun.vr.surface.VRGLSurfaceView
+        android:id="@+id/mySurfaceView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusableInTouchMode="true" />
 
-        <android.opengl.GLSurfaceView
-            android:id="@+id/mySurfaceView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clickable="true"
-            android:focusableInTouchMode="true" />
+    <!-- <com.baofeng.mojing.MojingSurfaceView
+         android:id="@+id/mojingSurfaceView"
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         android:clickable="true"
+         android:focusableInTouchMode="true" />-->
 
-       <!-- <com.baofeng.mojing.MojingSurfaceView
-            android:id="@+id/mojingSurfaceView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clickable="true"
-            android:focusableInTouchMode="true" />-->
-    </ViewFlipper>
-
-    <include
+   <!-- <include
+        layout="@layout/video_play_loading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        layout="@layout/video_play_loading" />
+        android:layout_centerInParent="true" />
 
     <include
-        android:layout_centerInParent="true"
+        layout="@layout/video_player_dialog_tip"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        layout="@layout/video_player_dialog_tip" />
+        android:layout_centerInParent="true" />
 
     <ImageView
         android:id="@+id/videoPlayer_ctrlbar_btn_reset"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/movie_ctrlbar_btn_reset_selector"
-        android:layout_centerVertical="true"
         android:layout_alignParentRight="true"
-        android:layout_marginRight="5dp"/>
-    <!-- 顶部控制栏 -->
+        android:layout_centerVertical="true"
+        android:layout_marginRight="5dp"
+        android:src="@drawable/movie_ctrlbar_btn_reset_selector" />
+    &lt;!&ndash; 顶部控制栏 &ndash;&gt;
 
     <include layout="@layout/video_player_fullscreen_contorller_bar_top" />
 
-    <!-- 底部控制栏 -->
+    &lt;!&ndash; 底部控制栏 &ndash;&gt;
 
-    <include layout="@layout/video_player_fullscreen_contorller_bar_bottom" />
+    <include layout="@layout/video_player_fullscreen_contorller_bar_bottom" />-->
 </RelativeLayout>

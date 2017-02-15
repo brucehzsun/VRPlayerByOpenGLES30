@@ -22,13 +22,15 @@ import bruce.sun.vr.mojing.ManufacturerList;
 import bruce.sun.vr.render.BaseRenderer;
 import bruce.sun.vr.render.RendererListener;
 import bruce.sun.vr.render.VrRender;
+import bruce.sun.vr.surface.VRGLSurfaceView;
 import bruce.sun.vr.utils.Constant;
 
 /**
  * Update by sunhongzhi on 2017/2/14.
  */
 
-public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
+public class VRPlayPresenter implements IVRPlayPresenter, MediaPlayer.OnPreparedListener,
+        MediaPlayer.OnErrorListener, MediaPlayer.OnVideoSizeChangedListener, MediaPlayer.OnInfoListener, MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnCompletionListener {
     private static final String TAG = "VRPlayPresenter";
 
 
@@ -49,10 +51,6 @@ public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
 
 
     VrRender mojingRenderer;
-
-    MyRenderer myRenderer;
-
-    BaseRenderer curRenderer;
 
     boolean isMojingInited = false;
 
@@ -78,7 +76,9 @@ public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
     SparseArray<String> keyStateMap = new SparseArray<String>();
 
     SparseArray<String> axisStateMap = new SparseArray<String>();
-    private GLSurfaceView glSurfaceView;
+    private VRGLSurfaceView glSurfaceView;
+
+    private boolean isBuffering;
 
     public VRPlayPresenter(IVRPlayView ivrPlayView) {
         activity = (Activity) ivrPlayView;
@@ -86,107 +86,108 @@ public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
     }
 
     @Override
-    public void setGLSurfaceView(GLSurfaceView mySurfaceView) {
+    public void setGLSurfaceView(VRGLSurfaceView mySurfaceView) {
         this.glSurfaceView = mySurfaceView;
 
     }
 
-    protected void play(String videoUrl) {
+    @Override
+    public void doPlay(String playUrl) {
         // flipper发生切换时，薪的glsurface会重新创建,导致再次调用play方法
         if (mMediaPlayer != null) {
             return;
         }
-        Log.d(TAG, "创建MediaPlayer");
+        Log.d(TAG, "doPlay");
         mMediaPlayer = new MediaPlayer();
         try {
-            mMediaPlayer.setSurface(getRenderer().getSurface());
-            mMediaPlayer.setDataSource(videoUrl);
-            mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mediaPlayer) {
-                    getRenderer().setDefaultBufferSize(mMediaPlayer.getVideoWidth(),
-                            mMediaPlayer.getVideoHeight());
+            mMediaPlayer.setSurface(glSurfaceView.getSurface());
+            mMediaPlayer.setDataSource(playUrl);
+            mMediaPlayer.setOnPreparedListener(this);
+            mMediaPlayer.setOnErrorListener(this);
+            mMediaPlayer.setOnVideoSizeChangedListener(this);
+            mMediaPlayer.setOnInfoListener(this);
+            mMediaPlayer.setOnSeekCompleteListener(this);
+            mMediaPlayer.setOnCompletionListener(this);
+            mMediaPlayer.prepareAsync();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mp, int what, int extra) {
+        Log.e(TAG, " mMediaPlayer.onError();");
+        return false;
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+//        getRenderer().setDefaultBufferSize(mMediaPlayer.getVideoWidth(),
+//                mMediaPlayer.getVideoHeight());
 //                    if (VrPreferences.getInstance(VRActivity.this).isFirstTouchMode()) {
 //                        showTouchTips();
 //                        auToHideTip();
 //                        VrPreferences.getInstance(VRActivity.this).setFirstTouchMode(false);
 //                    }
 //                    auToHide();
-                    Log.d(TAG, " mMediaPlayer.start();");
-                }
-            });
-            mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                @Override
-                public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
-                    Log.e(TAG, " mMediaPlayer.onError();");
-                    return true;
-                }
-            });
-            mMediaPlayer
-                    .setOnVideoSizeChangedListener(new MediaPlayer.OnVideoSizeChangedListener() {
-                        @Override
-                        public void onVideoSizeChanged(MediaPlayer mediaPlayer, int i, int i1) {
-//                            if (checkStart()) {
+        Log.d(TAG, " mMediaPlayer.start();");
+    }
+
+    @Override
+    public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
+        Log.d(TAG, "onVideoSizeChanged width = " + width + ",height = " + height);
+        //                            if (checkStart()) {
 //                                handler.sendEmptyMessageDelayed(MSG_UPDATE_SEEK_BAR, 1000);
 //                            }
-                        }
-                    });
-            mMediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
-                // buffer start和buffer end居然也可能不成对出现
-                private boolean isBuffering;
+    }
 
-                @Override
-                public boolean onInfo(MediaPlayer mp, int what, int extra) {
-                    switch (what) {
-                        case MediaPlayer.MEDIA_INFO_BUFFERING_START:
-                            if (!isBuffering) {
-                                isBuffering = true;
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        Log.d(TAG, "onCompletion");
+        try {
+            mMediaPlayer.stop();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
+        mMediaPlayer.release();
+        mMediaPlayer = null;
+//                    finish();
+    }
+
+    @Override
+    public boolean onInfo(MediaPlayer mp, int what, int extra) {
+        Log.d(TAG, "onInfo what = " + what);
+        switch (what) {
+            case MediaPlayer.MEDIA_INFO_BUFFERING_START:
+                if (!isBuffering) {
+                    isBuffering = true;
 //                                showProgress(true);
-                            }
-                            break;
-
-                        case MediaPlayer.MEDIA_INFO_BUFFERING_END:
-                            if (isBuffering) {
-                                isBuffering = false;
-//                                showProgress(false);
-                            }
-                            break;
-
-                        default:
-                            break;
-                    }
-                    return true;
                 }
-            });
-            mMediaPlayer.setOnSeekCompleteListener(new MediaPlayer.OnSeekCompleteListener() {
-                @Override
-                public void onSeekComplete(MediaPlayer mp) {
-                    // 没调用seekTo方法，居然也有可能收到onSeekComplete,无语中
+                break;
+
+            case MediaPlayer.MEDIA_INFO_BUFFERING_END:
+                if (isBuffering) {
+                    isBuffering = false;
+//                                showProgress(false);
+                }
+                break;
+
+            default:
+                break;
+        }
+        return true;
+    }
+
+    @Override
+    public void onSeekComplete(MediaPlayer mp) {
+        Log.d(TAG, "onSeekComplete");
+        // 没调用seekTo方法，居然也有可能收到onSeekComplete,无语中
 //                    if (isSeeking) {
 //                        isSeeking = false;
 //                        showProgress(false);
 //                    }
-                }
-            });
-            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    try {
-                        mMediaPlayer.stop();
-                    } catch (IllegalStateException e) {
-                        e.printStackTrace();
-                    }
-                    mMediaPlayer.release();
-                    mMediaPlayer = null;
-//                    finish();
-                }
-            });
-            mMediaPlayer.prepareAsync();
-            Log.d(TAG, "mMediaPlayer prepare");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
+
 
     protected void onDestroy() {
         Log.d(TAG, "onDestroy");
@@ -226,16 +227,16 @@ public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
         }
     }
 
-    public void onRendererReady() {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.setSurface(getRenderer().getSurface());
-        }
-        if (isReady()) {
-            getRenderer().setDefaultBufferSize(mMediaPlayer.getVideoWidth(),
-                    mMediaPlayer.getVideoHeight());
-        }
-        checkStart();
-    }
+//    public void onRendererReady() {
+//        if (mMediaPlayer != null) {
+//            mMediaPlayer.setSurface(getRenderer().getSurface());
+//        }
+//        if (isReady()) {
+//            getRenderer().setDefaultBufferSize(mMediaPlayer.getVideoWidth(),
+//                    mMediaPlayer.getVideoHeight());
+//        }
+//        checkStart();
+//    }
 
     private boolean isReady() {
 //        if (mMediaPlayer != null && isPlayerPrepared && isVideoSizeChanged && isRendererReady) {
@@ -284,12 +285,12 @@ public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
     }
 
     private void selectSurfaceView(int id, boolean isOnCreate) {
-        if (ivrPlayView.isMojing()) {
-            if (!isOnCreate) {
-                myRenderer.onPause();
-                glSurfaceView.onPause();
-            }
-            if (!isMojingInited) {
+//        if (ivrPlayView.isMojing()) {
+//            if (!isOnCreate) {
+//                myRenderer.onPause();
+//                glSurfaceView.onPause();
+//            }
+//            if (!isMojingInited) {
 //                initMojingSDK();
 //                mojingRenderer = new VrRender(activity, handler);
 //                mojingRenderer.setListener(this);
@@ -315,28 +316,28 @@ public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
 //                    startGyro();
 //                }
 //                isMojingInited = true;
-            }
-            if (!isOnCreate) {
-                mojingRenderer.onResume();
-//                mojingSurfaceView.onResume();
-            }
-        } else {
-            if (!isOnCreate) {
-                mojingRenderer.onPause();
-//                mojingSurfaceView.onPause();
-            }
-            if (!isMyInited) {
-                myRenderer = new MyRenderer(activity, handler);
-                myRenderer.setListener(this);
-                glSurfaceView.setRenderer(myRenderer);
-                myRenderer.setGlSurfaceView(glSurfaceView, GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-                isMyInited = true;
-            }
-            if (!isOnCreate) {
-                myRenderer.onResume();
-                glSurfaceView.onResume();
-            }
-        }
+//            }
+//            if (!isOnCreate) {
+//                mojingRenderer.onResume();
+////                mojingSurfaceView.onResume();
+//            }
+//        } else {
+//            if (!isOnCreate) {
+//                mojingRenderer.onPause();
+////                mojingSurfaceView.onPause();
+//            }
+//            if (!isMyInited) {
+//                myRenderer = new MyRenderer(activity, handler);
+//                myRenderer.setListener(this);
+//                glSurfaceView.setRenderer(myRenderer);
+//                myRenderer.setGlSurfaceView(glSurfaceView, GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+//                isMyInited = true;
+//            }
+//            if (!isOnCreate) {
+//                myRenderer.onResume();
+//                glSurfaceView.onResume();
+//            }
+//        }
 //        curSurfaceView = getSurfaceView();
 //        curRenderer = getRenderer();
 //        curSurfaceView.requestFocus();
@@ -378,18 +379,18 @@ public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
      * 开启touch模式
      */
     private void startTouchMode() {
-        if (!isTouchMode) {
-            resetModeFlag();
-            isTouchMode = true;
-//            mResetBtn.setVisibility(View.VISIBLE);
-            myRenderer.setGlSurfaceView(glSurfaceView, GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-            if (ivrPlayView.isMojing()) {
-                onPauseMojing();
-                selectSurfaceView(Constant.ID_MY, false);
-                onResumeMy();
-            }
-            stopGyro();
-        }
+//        if (!isTouchMode) {
+//            resetModeFlag();
+//            isTouchMode = true;
+////            mResetBtn.setVisibility(View.VISIBLE);
+//            myRenderer.setGlSurfaceView(glSurfaceView, GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+//            if (ivrPlayView.isMojing()) {
+//                onPauseMojing();
+//                selectSurfaceView(Constant.ID_MY, false);
+//                onResumeMy();
+//            }
+//            stopGyro();
+//        }
     }
 
 
@@ -397,22 +398,22 @@ public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
      * 开启Gyro模式
      */
     private void startGyroMode() {
-        if (VrPreferences.getInstance(activity).isFirstGoryMode()) {
-            ivrPlayView.showGoryTips();
-            ivrPlayView.auToHideTip();
-            VrPreferences.getInstance(activity).setFirstGoryMode(false);
-        }
-//        mResetBtn.setVisibility(View.VISIBLE);
-        resetModeFlag();
-//        mGyroModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_tly_down_selector);
-        isGyroMode = true;
-        myRenderer.setGlSurfaceView(glSurfaceView, GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-        if (ivrPlayView.isMojing()) {
-            onPauseMojing();
-            selectSurfaceView(Constant.ID_MY, false);
-            onResumeMy();
-        }
-        startGyro();
+//        if (VrPreferences.getInstance(activity).isFirstGoryMode()) {
+//            ivrPlayView.showGoryTips();
+//            ivrPlayView.auToHideTip();
+//            VrPreferences.getInstance(activity).setFirstGoryMode(false);
+//        }
+////        mResetBtn.setVisibility(View.VISIBLE);
+//        resetModeFlag();
+////        mGyroModeBtn.setImageResource(R.drawable.movie_ctrlbar_btn_tly_down_selector);
+//        isGyroMode = true;
+//        myRenderer.setGlSurfaceView(glSurfaceView, GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+//        if (ivrPlayView.isMojing()) {
+//            onPauseMojing();
+//            selectSurfaceView(Constant.ID_MY, false);
+//            onResumeMy();
+//        }
+//        startGyro();
     }
 
     @Override
@@ -423,13 +424,13 @@ public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
         onPauseMy();
         selectSurfaceView(Constant.ID_MOJING, false);
         onResumeMojing();
-        startGyro();
+//        startGyro();
     }
 
     @Override
     public void onResume() {
         glSurfaceView.onResume();
-        startGyroTracking();
+//        startGyroTracking();
         if (ivrPlayView.isMojing()) {
             onResumeMojing();
         } else {
@@ -440,14 +441,13 @@ public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
     @Override
     public void onPause() {
         glSurfaceView.onPause();
-        stopGyroTracking();
+//        stopGyroTracking();
         if (ivrPlayView.isMojing()) {
             onPauseMojing();
         } else {
             onPauseMy();
         }
     }
-
 
 
     private void resetModeFlag() {
@@ -464,42 +464,35 @@ public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
         mojingRenderer.getMatrixState().setProjectFrustum(-ratio, ratio, -ratio, ratio, 1.f, 800);
     }
 
-    private BaseRenderer getRenderer() {
-        if (ivrPlayView.isMojing()) {
-            return mojingRenderer;
-        } else {
-            return myRenderer;
-        }
-    }
 
-    private void startGyro() {
-        if (curRenderer != null && !curRenderer.isGyroTrackEnabled()) {
-            curRenderer.setGyroTrackEnabled(true);
-            startGyroTracking();
-            MojingSDK.ResetSensorOrientation();
-        }
-    }
-
-    private void stopGyro() {
-        if (curRenderer != null && curRenderer.isGyroTrackEnabled()) {
-            stopGyroTracking();
-            curRenderer.setGyroTrackEnabled(false);
-        }
-    }
-
-    private void startGyroTracking() {
-        if (curRenderer != null && curRenderer.isGyroTrackEnabled()) {
-            initMojingSDK();
-            MojingSDK.StartTracker(100);
-        }
-    }
-
-    private void stopGyroTracking() {
-        if (curRenderer != null && curRenderer.isGyroTrackEnabled()) {
-            initMojingSDK();
-            MojingSDK.StopTracker();
-        }
-    }
+//    private void startGyro() {
+//        if (curRenderer != null && !curRenderer.isGyroTrackEnabled()) {
+//            curRenderer.setGyroTrackEnabled(true);
+//            startGyroTracking();
+//            MojingSDK.ResetSensorOrientation();
+//        }
+//    }
+//
+//    private void stopGyro() {
+//        if (curRenderer != null && curRenderer.isGyroTrackEnabled()) {
+//            stopGyroTracking();
+//            curRenderer.setGyroTrackEnabled(false);
+//        }
+//    }
+//
+//    private void startGyroTracking() {
+//        if (curRenderer != null && curRenderer.isGyroTrackEnabled()) {
+//            initMojingSDK();
+//            MojingSDK.StartTracker(100);
+//        }
+//    }
+//
+//    private void stopGyroTracking() {
+//        if (curRenderer != null && curRenderer.isGyroTrackEnabled()) {
+//            initMojingSDK();
+//            MojingSDK.StopTracker();
+//        }
+//    }
 
 //    private SurfaceView getSurfaceView() {
 //        if (ivrPlayView.isMojing()) {
@@ -535,36 +528,24 @@ public class VRPlayPresenter implements IVRPlayPresenter ,RendererListener {
         }
     }
 
-    @Override
-    public void onRendererInit() {
-    }
-    @Override
-    public void onSwitchModeStart() {
-        // 切换模式开始
-        ivrPlayView.showProgress(true);
-    }
 
-    @Override
-    public void onSwitchModeEnd() {
-        // 切换模式结束
-        ivrPlayView.showProgress(false);
-    }
-    @Override
-    public void onDetectTimeWarpAndMultiThread(boolean isSupported) {
-        if (!ivrPlayView.isMojing()) {
-            return;
-        }
-        // 本设备不支持TimeWarp和多线程反畸变
-        if (isSupported) {
-            VrPreferences.getInstance(activity).setSupportTimeWarpAndMultiThread("yes");
-            return;
-        }
-        VrPreferences.getInstance(activity).setSupportTimeWarpAndMultiThread("no");
-//        flipper.setDisplayedChild(Constant.ID_MY);
-//        mojingSurfaceView.setTimeWarp(false);
-//        mojingSurfaceView.setMultiThread(false);
-//        flipper.setDisplayedChild(Constant.ID_MOJING);
-    }
+//
+//    @Override
+//    public void onDetectTimeWarpAndMultiThread(boolean isSupported) {
+//        if (!ivrPlayView.isMojing()) {
+//            return;
+//        }
+//        // 本设备不支持TimeWarp和多线程反畸变
+//        if (isSupported) {
+//            VrPreferences.getInstance(activity).setSupportTimeWarpAndMultiThread("yes");
+//            return;
+//        }
+//        VrPreferences.getInstance(activity).setSupportTimeWarpAndMultiThread("no");
+////        flipper.setDisplayedChild(Constant.ID_MY);
+////        mojingSurfaceView.setTimeWarp(false);
+////        mojingSurfaceView.setMultiThread(false);
+////        flipper.setDisplayedChild(Constant.ID_MOJING);
+//    }
 
 
     private static class MyHandler extends Handler {
