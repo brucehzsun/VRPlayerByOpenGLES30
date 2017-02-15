@@ -109,7 +109,8 @@ public class VRPlayPresenter implements IVRPlayPresenter, MediaPlayer.OnPrepared
 //                        VrPreferences.getInstance(VRActivity.this).setFirstTouchMode(false);
 //                    }
 //                    auToHide();
-        Log.d(TAG, " mMediaPlayer.start();");
+        Log.d(TAG, " onPrepared");
+        mp.start();
     }
 
     @Override
