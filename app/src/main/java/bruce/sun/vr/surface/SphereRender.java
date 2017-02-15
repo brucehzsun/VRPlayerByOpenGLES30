@@ -145,7 +145,7 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
             if (isFrameAvailable) {
                 surfaceTexture.updateTexImage();
                 isFrameAvailable = false;
-                Log.i(TAG, "onDrawFrame,frameAvailable:" + isFrameAvailable);
+//                Log.i(TAG, "onDrawFrame,frameAvailable:" + isFrameAvailable);
                 if (frames < SWITCH_MODE_END_FRAMES) {
                     frames += 1;
                     isSwitchModeEnd = (frames == SWITCH_MODE_END_FRAMES);
@@ -173,7 +173,7 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
         synchronized (lock) {
-            Log.d(TAG, ">> nFrameAvailable lock, isRenderWhenDirty = " + isRenderWhenDirty + ",isTmpRenderContinuously = " + isTmpRenderContinuously);
+//            Log.d(TAG, ">> nFrameAvailable lock, isRenderWhenDirty = " + isRenderWhenDirty + ",isTmpRenderContinuously = " + isTmpRenderContinuously);
             isFrameAvailable = true;
             if (isRenderWhenDirty && !isTmpRenderContinuously) {
                 Log.d(TAG, ">> >> nFrameAvailable requestRender");
@@ -265,6 +265,45 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
         matrixState.setCamera(0, 0, 0, -0.1f, 0f, 0, 0f, 1.0f, 0.0f);
     }
 
+    public void setTouchData(float touchX, float touchY, boolean isTouch) {
+        synchronized (lock) {
+            touchX += touchLookDeltaX;
+            // 用户并未改变滑屏数据(当用户仅仅是单击一次GLSurfaceView，不改变渲染帧率)
+            if (this.touchX == touchX && this.touchY == touchY) {
+                return;
+            }
+            this.touchX = touchX;
+            this.touchY = touchY;
+            if (isTouch) {
+                tmpRenderContinuously();
+            }
+        }
+    }
+
+    private void tmpRenderContinuously() {
+        synchronized (lock) {
+            if (!isRenderWhenDirty) {
+                return;
+            }
+            if (backToRenderWhenDirtyDelayStart > 0) {// 延时任务已开启
+                long now = System.currentTimeMillis();
+                if (now - backToRenderWhenDirtyDelayStart >= BACK_TO_RENDER_WHEN_DIRTY_DELAY_REDO) {
+//                    handler.removeCallbacks(backToRenderWhenDirty);
+                    backToRenderWhenDirtyDelayStart = now;
+//                    handler.postDelayed(backToRenderWhenDirty, BACK_TO_RENDER_WHEN_DIRTY_DELAY);
+                    Log.i("xx", "redo backToRenderWhenDirty");
+                }
+            } else { // 延时任务未开启
+                isTmpRenderContinuously = true;
+                glSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+                backToRenderWhenDirtyDelayStart = System.currentTimeMillis();
+//                handler.postDelayed(backToRenderWhenDirty, BACK_TO_RENDER_WHEN_DIRTY_DELAY);
+                Log.i("xx", "do backToRenderWhenDirty");
+            }
+        }
+    }
+
+
     //--------------------------------------------------------------------------------------------------------------
 
     public void setSemiSphere(boolean isSemiSphere) {
@@ -337,43 +376,6 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
 //    };
 
 
-//    public void setTouchData(float touchX, float touchY, boolean isTouch) {
-//        synchronized (lock) {
-//            touchX += touchLookDeltaX;
-//            // 用户并未改变滑屏数据(当用户仅仅是单击一次GLSurfaceView，不改变渲染帧率)
-//            if (this.touchX == touchX && this.touchY == touchY) {
-//                return;
-//            }
-//            this.touchX = touchX;
-//            this.touchY = touchY;
-//            if (isTouch) {
-//                tmpRenderContinuously();
-//            }
-//        }
-//    }
-
-//    private void tmpRenderContinuously() {
-//        synchronized (lock) {
-//            if (!isRenderWhenDirty) {
-//                return;
-//            }
-//            if (backToRenderWhenDirtyDelayStart > 0) {// 延时任务已开启
-//                long now = System.currentTimeMillis();
-//                if (now - backToRenderWhenDirtyDelayStart >= BACK_TO_RENDER_WHEN_DIRTY_DELAY_REDO) {
-//                    handler.removeCallbacks(backToRenderWhenDirty);
-//                    backToRenderWhenDirtyDelayStart = now;
-//                    handler.postDelayed(backToRenderWhenDirty, BACK_TO_RENDER_WHEN_DIRTY_DELAY);
-//                    Log.i("xx", "redo backToRenderWhenDirty");
-//                }
-//            } else { // 延时任务未开启
-//                isTmpRenderContinuously = true;
-//                glView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-//                backToRenderWhenDirtyDelayStart = System.currentTimeMillis();
-//                handler.postDelayed(backToRenderWhenDirty, BACK_TO_RENDER_WHEN_DIRTY_DELAY);
-//                Log.i("xx", "do backToRenderWhenDirty");
-//            }
-//        }
-//    }
 
     private float format(float r) {
         if (r > zoom_range) {

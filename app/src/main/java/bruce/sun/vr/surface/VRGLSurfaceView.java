@@ -29,4 +29,8 @@ public class VRGLSurfaceView extends GLSurfaceView {
     public Surface getSurface() {
         return mRenderer.getSurface();
     }
+
+    public void setTouchData(int touchDeltaX, int touchDeltaY, boolean b) {
+        mRenderer.setTouchData(touchDeltaX, touchDeltaY, b);
+    }
 }

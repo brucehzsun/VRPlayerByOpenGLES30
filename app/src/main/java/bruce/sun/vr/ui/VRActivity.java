@@ -152,6 +152,7 @@ public class VRActivity extends Activity implements OnTouchListener, IVRPlayView
                     } else {
                         touchDeltaY += deltaY / sDensity * sDamping;
                     }
+                    presenter.setTouchData(touchDeltaX, touchDeltaY, true);
 //                    getRenderer().setTouchData(touchDeltaX, touchDeltaY, true);
                 }
                 break;

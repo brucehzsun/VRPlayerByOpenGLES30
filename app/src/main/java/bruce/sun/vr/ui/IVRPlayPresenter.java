@@ -18,4 +18,6 @@ public interface IVRPlayPresenter {
     void setGLSurfaceView(VRGLSurfaceView mySurfaceView);
 
     void doPlay(String playUrl);
+
+    void setTouchData(int touchDeltaX, int touchDeltaY, boolean b);
 }
