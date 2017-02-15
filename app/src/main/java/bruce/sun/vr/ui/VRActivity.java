@@ -12,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.SeekBar;
 import android.widget.ViewFlipper;
@@ -64,6 +65,8 @@ public class VRActivity extends Activity implements OnTouchListener, IVRPlayView
         super.onCreate(icicle);
         Log.d(TAG, "onCreate");
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_vr);
         presenter = new VRPlayPresenter(this);
         MIN_MOVE_SPAN = VrUtils.dp2Px(this, 20);
