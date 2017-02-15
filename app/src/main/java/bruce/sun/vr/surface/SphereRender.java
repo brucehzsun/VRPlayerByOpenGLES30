@@ -10,6 +10,8 @@ import android.opengl.GLSurfaceView;
 import android.util.Log;
 import android.view.Surface;
 
+import com.baofeng.mojing.MojingSDK;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -59,7 +61,7 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
 
     private static boolean isSemiSphere;
 
-    private static boolean isGyroTrackEnabled;
+    private static boolean isGyroTrackEnabled = true;
 
     private static float touchX;
 
@@ -155,13 +157,14 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
         }
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
         matrixState.pushMatrix();
-//        if (isGyroTrackEnabled) {
-//            if (fM == null) {
-//                fM = new float[16];
-//            }
-//            com.baofeng.mojing.MojingSDK.getLastHeadView(fM);
-//            matrixState.setViewMatrix(fM);
-//        }
+        if (isGyroTrackEnabled) {
+            if (fM == null) {
+                fM = new float[16];
+            }
+            MojingSDK.getLastHeadView(fM);
+            matrixState.setViewMatrix(fM);
+            Log.d(TAG, "MojingSDK.getLastHeadView(fM);");
+        }
         rotateByTouch();
         sphere.drawSelf(textures[0]);
         matrixState.popMatrix();
@@ -234,7 +237,6 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
         scaleRatioPrev = 0f;
         isTmpRenderContinuously = false;
         backToRenderWhenDirtyDelayStart = 0;
-        isGyroTrackEnabled = false;
         touchX = 0;
         touchY = 0;
         touchLookDeltaX = 0;
@@ -423,11 +425,11 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
         scaleRatioPrev = scaleRatio;
     }
 
-    public void setSensorChanged(float upx, float upy) {
+    public void setSensorChanged(float upx, float upy, float upz) {
 //        matrixState.updateCamera(upx,upy);
         matrixState.setCamera(0, 0, 0,
                 0f, 0.0f, -0.1f,
-                upx, upy, 0.0f);
+                upx, upy, upz);
     }
 
 //    public void resetScale() {

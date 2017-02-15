@@ -10,6 +10,8 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Surface;
 
+import com.baofeng.mojing.MojingSDK;
+
 public class VRGLSurfaceView extends GLSurfaceView implements SensorEventListener {
     private static final String TAG = "VRGLSurfaceView";
 
@@ -33,22 +35,25 @@ public class VRGLSurfaceView extends GLSurfaceView implements SensorEventListene
         setRenderer(mRenderer);                //设置渲染器
         setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);//设置渲染模式为主动渲染
 
-        mSensorManager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
-        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
+//        mSensorManager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
+//        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        MojingSDK.Init(getContext());
+        MojingSDK.ResetSensorOrientation();
 
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+//        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        MojingSDK.StartTracker(100);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mSensorManager.unregisterListener(this);
+//        mSensorManager.unregisterListener(this);
+        MojingSDK.StopTracker();
     }
 
     @Override
@@ -61,7 +66,7 @@ public class VRGLSurfaceView extends GLSurfaceView implements SensorEventListene
         float upy = x;
         float upz = z;
         Log.d(TAG, "onSensorChanged x=" + upx + "," + "y=" + upy + "," + "z=" + upz);
-//        mRenderer.setSensorChanged(upx, upy);
+//        mRenderer.setSensorChanged(upx, upy, upz);
     }
 
     @Override
@@ -76,4 +81,5 @@ public class VRGLSurfaceView extends GLSurfaceView implements SensorEventListene
     public void setTouchData(int touchDeltaX, int touchDeltaY, boolean b) {
         mRenderer.setTouchData(touchDeltaX, touchDeltaY, b);
     }
+
 }
