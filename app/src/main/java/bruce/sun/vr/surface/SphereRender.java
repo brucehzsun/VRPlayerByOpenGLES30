@@ -201,6 +201,7 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
 
     private void rotateByTouch() {
         if (!isLookLeft()) {
+            Log.d(TAG, "rotateByTouch !isLookLeft()");
             // 朝后看
             if (applyTouchY() && touchY != 0) {
                 matrixState.rotate(-touchY, 1.0f, 0.0f, 0.0f);
@@ -211,10 +212,12 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
         } else {
             // 朝左看
             if (applyTouchY() && touchY != 0) {
+                Log.d(TAG, "rotateByTouch isLookLeft() touchY");
                 matrixState.rotate(touchY, 0.0f, 0.0f, 1.0f);
             }
             if (touchX != 0) {
-                matrixState.rotate(touchX, 0.0f, 1.0f, 0.0f);
+                Log.d(TAG, "rotateByTouch isLookLeft() touchX");
+                matrixState.rotate(-touchX, 0.0f, 1.0f, 0.0f);
             }
         }
     }
@@ -374,7 +377,6 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
 //            }
 //        }
 //    };
-
 
 
     private float format(float r) {
