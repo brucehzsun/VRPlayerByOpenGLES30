@@ -132,7 +132,7 @@ public class VRActivity extends Activity implements OnClickListener,
 
     private String videoUrl;
 
-    private PlayerProgressCtrl playerProgressCtrl;
+//    private PlayerProgressCtrl playerProgressCtrl;
 
 
     private String mFullVideoTitle;
@@ -150,7 +150,8 @@ public class VRActivity extends Activity implements OnClickListener,
 
     private String palyUrl;
     private IVRPlayPresenter presenter;
-    private MojingSurfaceView mojingSurfaceView;
+    private GLSurfaceView mySurfaceView;
+//    private MojingSurfaceView mojingSurfaceView;
 
     @Override
     protected void onCreate(Bundle icicle) {
@@ -202,17 +203,18 @@ public class VRActivity extends Activity implements OnClickListener,
 
         mBottomControlView.setOnTouchListener(blockTouchToGlSurface);
         mTopControlView.setOnTouchListener(blockTouchToGlSurface);
-        playerProgressCtrl = new PlayerProgressCtrl(mProgressBarLayout, null, null);
-        playerProgressCtrl.enableTraceMode(false);
+//        playerProgressCtrl = new PlayerProgressCtrl(mProgressBarLayout, null, null);
+//        playerProgressCtrl.enableTraceMode(false);
 
         flipper = (ViewFlipper) findViewById(R.id.flipper);
-        mojingSurfaceView = (MojingSurfaceView) flipper.getChildAt(Constant.ID_MOJING);
-        GLSurfaceView mySurfaceView = (GLSurfaceView) flipper.getChildAt(Constant.ID_MY);
+//        mojingSurfaceView = (MojingSurfaceView) flipper.getChildAt(Constant.ID_MOJING);
+        mySurfaceView = (GLSurfaceView) flipper.getChildAt(Constant.ID_MY);
         mySurfaceView.setEGLContextClientVersion(2);
-        mojingSurfaceView.setOnTouchListener(this);
+//        mojingSurfaceView.setOnTouchListener(this);
         mySurfaceView.setOnTouchListener(this);
+        presenter.setGLSurfaceView(mySurfaceView);
 
-        MojingSDK.Init(this);
+//        MojingSDK.Init(this);
 //        selectSurfaceView(ID_MY, true);
     }
 
@@ -250,6 +252,7 @@ public class VRActivity extends Activity implements OnClickListener,
         super.onPause();
         isOnResume = false;
         Log.d(TAG, "onPause");
+
         presenter.onPause();
 
     }
@@ -360,7 +363,7 @@ public class VRActivity extends Activity implements OnClickListener,
             @Override
             public void continuePlay() {
                 this.dismiss();
-                presenter.startGlassesMode();
+//                presenter.startGlassesMode();
             }
         };
         customDialog1.setCancelable(false);
@@ -384,7 +387,7 @@ public class VRActivity extends Activity implements OnClickListener,
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        presenter.seekTo(seekBar.getProgress());
+//        presenter.seekTo(seekBar.getProgress());
 //        handler.sendEmptyMessage(MSG_UPDATE_SEEK_BAR);
 //        handler.sendEmptyMessage(MSG_DISMISS_CONTROLLER_BAR);
         auToHide();
@@ -545,7 +548,7 @@ public class VRActivity extends Activity implements OnClickListener,
 
     @Override
     public void showProgress(boolean isShow) {
-        playerProgressCtrl.showProgress(isShow);
+//        playerProgressCtrl.showProgress(isShow);
     }
 
 

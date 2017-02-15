@@ -16,12 +16,12 @@
             android:clickable="true"
             android:focusableInTouchMode="true" />
 
-        <com.baofeng.mojing.MojingSurfaceView
+       <!-- <com.baofeng.mojing.MojingSurfaceView
             android:id="@+id/mojingSurfaceView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clickable="true"
-            android:focusableInTouchMode="true" />
+            android:focusableInTouchMode="true" />-->
     </ViewFlipper>
 
     <include
