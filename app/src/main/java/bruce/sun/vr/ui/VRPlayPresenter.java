@@ -5,11 +5,8 @@ import android.media.MediaPlayer;
 import android.opengl.GLSurfaceView;
 import android.os.Handler;
 import android.os.Message;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
-import android.view.SurfaceView;
-import android.view.View;
 
 import com.baofeng.mojing.MojingSDK;
 import com.baofeng.mojing.MojingSurfaceView;
@@ -20,13 +17,12 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 
-import bruce.sun.vr.R;
 import bruce.sun.vr.db.VrPreferences;
 import bruce.sun.vr.mojing.ManufacturerList;
 import bruce.sun.vr.render.BaseRenderer;
-import bruce.sun.vr.render.MyRenderer;
 import bruce.sun.vr.render.RendererListener;
 import bruce.sun.vr.render.VrRender;
+import bruce.sun.vr.utils.Constant;
 
 /**
  * Update by sunhongzhi on 2017/2/14.

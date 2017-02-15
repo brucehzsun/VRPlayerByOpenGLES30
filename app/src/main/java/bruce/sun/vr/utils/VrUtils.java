@@ -1,4 +1,4 @@
-package bruce.sun.vr.ui;
+package bruce.sun.vr.utils;
 
 import android.view.View;
 import android.view.ViewGroup;

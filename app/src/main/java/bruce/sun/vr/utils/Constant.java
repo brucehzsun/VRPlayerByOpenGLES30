@@ -1,4 +1,4 @@
-package bruce.sun.vr.ui;
+package bruce.sun.vr.utils;
 
 /**
  * Update by sunhongzhi on 2017/2/14.

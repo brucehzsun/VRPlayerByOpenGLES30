@@ -11,9 +11,7 @@ import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.MotionEvent;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
@@ -24,19 +22,10 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
-import com.baofeng.mojing.MojingSDK;
-import com.baofeng.mojing.MojingSurfaceView;
-import com.baofeng.mojing.input.base.MojingKeyCode;
-
-import java.lang.reflect.Field;
-
 import bruce.sun.vr.R;
-import bruce.sun.vr.db.VrPreferences;
-import bruce.sun.vr.mojing.ManufacturerList;
 import bruce.sun.vr.render.BaseRenderer;
-import bruce.sun.vr.render.MyRenderer;
-import bruce.sun.vr.render.RendererListener;
-import bruce.sun.vr.render.VrRender;
+import bruce.sun.vr.utils.Constant;
+import bruce.sun.vr.utils.VrUtils;
 
 
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
