@@ -23,13 +23,9 @@ import bruce.sun.vr.utils.VrUtils;
 
 
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-public class VRActivity extends Activity implements OnClickListener,
-        SeekBar.OnSeekBarChangeListener, OnTouchListener, IVRPlayView {
+public class VRActivity extends Activity implements OnTouchListener, IVRPlayView {
 
     private static final String TAG = "VRActivity";
-
-    ViewFlipper flipper;
-
 
     private float touchPrevX;
 
@@ -48,21 +44,6 @@ public class VRActivity extends Activity implements OnClickListener,
     private static final int TOUCH_EVENT_MODE_ZOOM = 2;
 
     private float zoomStartDistance;
-
-    private String videoUrl;
-
-//    private PlayerProgressCtrl playerProgressCtrl;
-
-
-    private String mFullVideoTitle;
-
-    private boolean isLive;
-
-    private boolean isShowMojingBtn = true;
-
-    private int taskId;
-
-    private final int liveCacheSize = 20 * 1024 * 1024;
 
     private int MIN_MOVE_SPAN; // 区分滑屏和点击的距离阈值
 
@@ -90,48 +71,11 @@ public class VRActivity extends Activity implements OnClickListener,
         BaseRenderer.reset();
         MIN_MOVE_SPAN = VrUtils.dp2Px(this, 20);
         initView();
-        initData();
-    }
-
-    private void initData() {
         playUrl = getIntent().getStringExtra("PlayUrl");
         presenter.doPlay(playUrl);
     }
 
-    private boolean isP2PLive() {
-        return isLive;
-    }
-
     private void initView() {
-//        mBackBtn = findViewById(R.id.videoPlayer_ctrlbar_btn_back);
-//        mShowTipRoot = findViewById(R.id.video_player_tip_root);
-//        mShowTipImg = (ImageView) findViewById(R.id.video_player_dialog_tip_img);
-//        mShowTipText = (TextView) findViewById(R.id.video_player_dialog_tip_text);
-//        mCurrTime = (TextView) findViewById(R.id.videoPlayer_ctlbar_text_curtime);
-//        mTotalTime = (TextView) findViewById(R.id.videoPlayer_ctrlbar_text_duration);
-//        mTopControlView = findViewById(R.id.videoPlayer_controlBar_top_layout);
-//        mBottomControlView = findViewById(R.id.videoPlayer_ctrlbar_bottom_layout);
-//        mTitle = (TextView) findViewById(R.id.movie_ctrlbar_text_name);
-//        mPauseBtn = (ImageView) findViewById(R.id.videoPlayer_ctrlbar_btn_playpause);
-//        mResetBtn = (ImageView) findViewById(R.id.videoPlayer_ctrlbar_btn_reset);
-//        mGyroModeBtn = (ImageView) findViewById(R.id.videoPlayer_ctrlbar_btn_gyro);
-//        mGlassesModeBtn = (ImageView) findViewById(R.id.videoPlayer_ctrlbar_btn_glasses);
-//        mSeekBar = (SeekBar) findViewById(R.id.videoPlayer_ctrlbar_seekbar);
-//        mProgressBarLayout = findViewById(R.id.videoPlayer_seek_loadingLayout);
-//        mTitle = (TextView) findViewById(R.id.movie_ctrlbar_text_name);
-//
-//        mBackBtn.setOnClickListener(this);
-//        mPauseBtn.setOnClickListener(this);
-//        mSeekBar.setOnSeekBarChangeListener(this);
-//        mResetBtn.setOnClickListener(this);
-//        mGyroModeBtn.setOnClickListener(this);
-//        mGlassesModeBtn.setOnClickListener(this);
-
-//        mBottomControlView.setOnTouchListener(blockTouchToGlSurface);
-//        mTopControlView.setOnTouchListener(blockTouchToGlSurface);
-//        playerProgressCtrl = new PlayerProgressCtrl(mProgressBarLayout, null, null);
-//        playerProgressCtrl.enableTraceMode(false);
-
 //        flipper = (ViewFlipper) findViewById(R.id.flipper);
 //        mojingSurfaceView = (MojingSurfaceView) flipper.getChildAt(Constant.ID_MOJING);
         mySurfaceView = (VRGLSurfaceView) findViewById(R.id.mySurfaceView);//.getChildAt(Constant.ID_MY);
@@ -164,61 +108,6 @@ public class VRActivity extends Activity implements OnClickListener,
     protected void onDestroy() {
         super.onDestroy();
         presenter.onDestory();
-    }
-
-
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-//            case R.id.videoPlayer_ctrlbar_btn_reset:
-//                resetTouchPosition();
-////                getRenderer().resetScale();
-//                break;
-            case R.id.videoPlayer_ctrlbar_btn_gyro:
-//                if (!isGyroMode) {
-//                    startGyroMode();
-//                } else {
-//                    startTouchMode();
-//                }
-                break;
-
-            case R.id.videoPlayer_ctrlbar_btn_glasses:
-//                if (!isGlassesMode) {
-//                    mResetBtn.setVisibility(View.GONE);
-//                    showGlassModeDialog();
-//                    FullVideoStatisticUtils.mojingCount(this,
-//                            FullVideoStatisticUtils.MOJING_DISPLAY_CLICK,
-//                            FullVideoStatisticUtils.STATUS_CLICK);
-//                } else {
-//                    startTouchMode();
-//                }
-                break;
-            case R.id.videoPlayer_ctrlbar_btn_playpause:
-//                pauseOrPlay();
-                break;
-            case R.id.videoPlayer_ctrlbar_btn_back:
-//                onBackEvent();
-                break;
-        }
-    }
-
-    @Override
-    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-//        mCurrTime.setText(VrUtils.getStringTime(progress));
-//        mTotalTime.setText(VrUtils.getStringTime(seekBar.getMax()));
-    }
-
-    @Override
-    public void onStartTrackingTouch(SeekBar seekBar) {
-//        handler.removeMessages(MSG_UPDATE_SEEK_BAR);
-//        cancleAuToHide();
-    }
-
-    @Override
-    public void onStopTrackingTouch(SeekBar seekBar) {
-//        presenter.seekTo(seekBar.getProgress());
-//        handler.sendEmptyMessage(MSG_UPDATE_SEEK_BAR);
-//        handler.sendEmptyMessage(MSG_DISMISS_CONTROLLER_BAR);
     }
 
 

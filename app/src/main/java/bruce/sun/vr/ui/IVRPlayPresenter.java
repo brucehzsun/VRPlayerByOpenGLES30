@@ -9,15 +9,7 @@ import bruce.sun.vr.surface.VRGLSurfaceView;
  */
 
 public interface IVRPlayPresenter {
-    void onDestory();
-
-    boolean isPlaying();
-
-    void seekTo(int progress);
-
-    void pause();
-
-    void startGlassesMode();
+    void onDestroy();
 
     void onResume();
 
