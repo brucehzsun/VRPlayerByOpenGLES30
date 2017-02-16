@@ -5,7 +5,7 @@ import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.graphics.SurfaceTexture.OnFrameAvailableListener;
 import android.opengl.GLES11Ext;
-import android.opengl.GLES20;
+import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
 import android.view.Surface;
@@ -123,19 +123,19 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
         } else {
             sphere = new SphereModel(matrixState, SPHERE_RADIUS);
         }
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         Log.i(TAG, "onSurfaceChanged,w:" + width + ",h:" + height + "," + this);
-        GLES20.glViewport(0, 0, width, height);
+        GLES30.glViewport(0, 0, width, height);
         screenSizeRatio = Math.max(width, height) * 1.0f / Math.min(width, height);
         matrixState.setProjectFrustum(-ratio * screenSizeRatio, ratio * screenSizeRatio, -ratio,
                 ratio, 1.0f, 800);
         resetLookAt();
-        GLES20.glEnable(GLES20.GL_CULL_FACE);
+        GLES30.glEnable(GLES30.GL_CULL_FACE);
         matrixState.setInitStack();
 //                    listener.onRendererReady();
     }
@@ -155,7 +155,7 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
             }
             draws++;
         }
-        GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+        GLES30.glClear(GLES30.GL_DEPTH_BUFFER_BIT | GLES30.GL_COLOR_BUFFER_BIT);
         matrixState.pushMatrix();
         if (isGyroTrackEnabled) {
             if (fM == null) {
@@ -187,15 +187,15 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
 
     private void createTexture() {
         textures = new int[1];
-        GLES20.glGenTextures(1, textures, 0);
+        GLES30.glGenTextures(1, textures, 0);
 
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textures[0]);
+        GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textures[0]);
         ShaderUtil.checkGlError("Texture bind");
 
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
+        GLES30.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_NEAREST);
+        GLES30.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
+        GLES30.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
 
         surfaceTexture = new SurfaceTexture(textures[0]);
         surfaceTexture.setOnFrameAvailableListener(this);

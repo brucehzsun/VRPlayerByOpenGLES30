@@ -3,7 +3,7 @@ package bruce.sun.vr.domain;
 
 import android.annotation.SuppressLint;
 import android.opengl.GLES11Ext;
-import android.opengl.GLES20;
+import android.opengl.GLES30;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -174,28 +174,28 @@ public class SphereModel implements IVrModel {
 
     public void initShader(String vertexShader, String fragmentShader) {
         mProgram = ShaderUtil.createProgram(vertexShader, fragmentShader);
-        maPositionHandle = GLES20.glGetAttribLocation(mProgram, "aPosition");
-        maTexCoorHandle = GLES20.glGetAttribLocation(mProgram, "aTexCoor");
-        muMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "uMVPMatrix");
-        sTextureHandle = GLES20.glGetUniformLocation(mProgram, "sTexture");
+        maPositionHandle = GLES30.glGetAttribLocation(mProgram, "aPosition");
+        maTexCoorHandle = GLES30.glGetAttribLocation(mProgram, "aTexCoor");
+        muMVPMatrixHandle = GLES30.glGetUniformLocation(mProgram, "uMVPMatrix");
+        sTextureHandle = GLES30.glGetUniformLocation(mProgram, "sTexture");
     }
 
     @SuppressLint("InlinedApi")
     @Override
     public void drawSelf(int texId) {
-        GLES20.glUseProgram(mProgram);
-        GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, matrixState.getFinalMatrix(), 0);
-        GLES20.glVertexAttribPointer(maPositionHandle, 3, GLES20.GL_FLOAT, false, 3 * 4,
+        GLES30.glUseProgram(mProgram);
+        GLES30.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, matrixState.getFinalMatrix(), 0);
+        GLES30.glVertexAttribPointer(maPositionHandle, 3, GLES30.GL_FLOAT, false, 3 * 4,
                 mVertexBuffer);
-        GLES20.glVertexAttribPointer(maTexCoorHandle, 2, GLES20.GL_FLOAT, false, 2 * 4,
+        GLES30.glVertexAttribPointer(maTexCoorHandle, 2, GLES30.GL_FLOAT, false, 2 * 4,
                 mTexCoorBuffer);
-        GLES20.glEnableVertexAttribArray(maPositionHandle);
-        GLES20.glEnableVertexAttribArray(maTexCoorHandle);
+        GLES30.glEnableVertexAttribArray(maPositionHandle);
+        GLES30.glEnableVertexAttribArray(maTexCoorHandle);
 
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texId);
-        GLES20.glUniform1i(sTextureHandle, 0);
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texId);
+        GLES30.glUniform1i(sTextureHandle, 0);
 
-        GLES20.glDrawElements(GLES20.GL_TRIANGLES, iCount, GLES20.GL_UNSIGNED_SHORT, indexBuffer);
+        GLES30.glDrawElements(GLES30.GL_TRIANGLES, iCount, GLES30.GL_UNSIGNED_SHORT, indexBuffer);
     }
 }
