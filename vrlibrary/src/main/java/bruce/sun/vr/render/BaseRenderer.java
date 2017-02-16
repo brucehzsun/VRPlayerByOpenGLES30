@@ -106,9 +106,9 @@ public abstract class BaseRenderer implements GLSurfaceView.Renderer, OnFrameAva
     private void createSphere() {
         matrixState.setInitStack();
         if (isSemiSphere) {
-            sphere = new SemiSphereModel(matrixState, SPHERE_RADIUS);
+            sphere = new SemiSphereModel(context, matrixState, SPHERE_RADIUS);
         } else {
-            sphere = new SphereModel(matrixState, SPHERE_RADIUS);
+            sphere = new SphereModel(context, matrixState, SPHERE_RADIUS);
         }
     }
 

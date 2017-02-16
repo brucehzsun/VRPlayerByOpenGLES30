@@ -2,6 +2,7 @@
 package bruce.sun.vr.domain;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES30;
 
@@ -37,7 +38,7 @@ public class SphereModel implements IVrModel {
 
     protected MatrixState matrixState;
 
-    public SphereModel(MatrixState matrixState, float radius) {
+    public SphereModel(Context context, MatrixState matrixState, float radius) {
         this.matrixState = matrixState;
         creatSphere(radius);
 

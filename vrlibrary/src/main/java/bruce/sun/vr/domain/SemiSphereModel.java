@@ -1,6 +1,8 @@
 
 package bruce.sun.vr.domain;
 
+import android.content.Context;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -9,8 +11,8 @@ import bruce.sun.vr.utils.MatrixState;
 
 public class SemiSphereModel extends SphereModel {
 
-    public SemiSphereModel(MatrixState matrixState, float radius) {
-        super(matrixState, radius);
+    public SemiSphereModel(Context context,MatrixState matrixState, float radius) {
+        super(context,matrixState, radius);
     }
 
     public boolean isSemiSphere() {

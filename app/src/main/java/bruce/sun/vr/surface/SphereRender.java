@@ -119,9 +119,9 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
 //                    listener.onSwitchModeStart();
 
         if (isSemiSphere) {
-            sphere = new SemiSphereModel(matrixState, SPHERE_RADIUS);
+            sphere = new SemiSphereModel(context,matrixState, SPHERE_RADIUS);
         } else {
-            sphere = new SphereModel(matrixState, SPHERE_RADIUS);
+            sphere = new SphereModel(context,matrixState, SPHERE_RADIUS);
         }
         GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);
