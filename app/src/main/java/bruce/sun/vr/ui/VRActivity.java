@@ -24,7 +24,7 @@ import bruce.sun.vr.utils.VrUtils;
 
 
 @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
-public class VRActivity extends Activity implements OnTouchListener, IVRPlayView {
+public class VRActivity extends Activity implements OnTouchListener, IVRPlayView, OnClickListener {
 
     private static final String TAG = "VRActivity";
 
@@ -79,6 +79,10 @@ public class VRActivity extends Activity implements OnTouchListener, IVRPlayView
 //        flipper = (ViewFlipper) findViewById(R.id.flipper);
 //        mojingSurfaceView = (MojingSurfaceView) flipper.getChildAt(Constant.ID_MOJING);
         mySurfaceView = (VRGLSurfaceView) findViewById(R.id.mySurfaceView);//.getChildAt(Constant.ID_MY);
+        View gyroButton = findViewById(R.id.videoPlayer_ctrlbar_btn_gyro);
+
+        gyroButton.setOnClickListener(this);
+
         mySurfaceView.setOnTouchListener(this);
         presenter.setGLSurfaceView(mySurfaceView);
 
@@ -178,4 +182,12 @@ public class VRActivity extends Activity implements OnTouchListener, IVRPlayView
 //        getRenderer().setTouchData(0, 0, false);
     }
 
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.videoPlayer_ctrlbar_btn_gyro:
+                presenter.onClickGyroButton();
+                break;
+        }
+    }
 }

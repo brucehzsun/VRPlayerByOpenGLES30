@@ -61,7 +61,7 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
 
     private static boolean isSemiSphere;
 
-    private static boolean isGyroTrackEnabled = true;
+    private boolean isGyroTrackEnabled;
 
     private static float touchX;
 
@@ -356,6 +356,10 @@ public class SphereRender implements GLSurfaceView.Renderer, OnFrameAvailableLis
         return matrixState;
     }
 
+
+    public void setIsGyroTrackEnabled(boolean isGyroTrackEnabled) {
+        this.isGyroTrackEnabled = isGyroTrackEnabled;
+    }
 
     public boolean isGyroTrackEnabled() {
         return isGyroTrackEnabled;

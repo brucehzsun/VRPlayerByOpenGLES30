@@ -82,4 +82,11 @@ public class VRGLSurfaceView extends GLSurfaceView implements SensorEventListene
         mRenderer.setTouchData(touchDeltaX, touchDeltaY, b);
     }
 
+    public void onClickGyroButton() {
+        if (mRenderer.isGyroTrackEnabled()) {
+            mRenderer.setIsGyroTrackEnabled(false);
+        } else {
+            mRenderer.setIsGyroTrackEnabled(true);
+        }
+    }
 }

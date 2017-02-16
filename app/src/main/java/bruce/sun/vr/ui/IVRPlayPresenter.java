@@ -20,4 +20,6 @@ public interface IVRPlayPresenter {
     void doPlay(String playUrl);
 
     void setTouchData(int touchDeltaX, int touchDeltaY, boolean b);
+
+    void onClickGyroButton();
 }

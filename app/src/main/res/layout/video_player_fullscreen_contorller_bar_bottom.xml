@@ -92,7 +92,6 @@
                 android:layout_height="28dp"
                 android:layout_marginLeft="30dp"
                 android:layout_toRightOf="@+id/videoPlayer_ctrlbar_btn_gyro"
-                android:visibility="gone"
                 android:src="@drawable/movie_ctrlbar_btn_mj_selector" />
 
         </RelativeLayout>

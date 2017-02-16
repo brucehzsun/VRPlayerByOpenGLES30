@@ -104,6 +104,11 @@ public class VRPlayPresenter implements IVRPlayPresenter, MediaPlayer.OnPrepared
     }
 
     @Override
+    public void onClickGyroButton() {
+        glSurfaceView.onClickGyroButton();
+    }
+
+    @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         Log.e(TAG, " mMediaPlayer.onError();");
         return false;
