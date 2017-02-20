@@ -38,6 +38,9 @@ public class MainActivity extends Activity {
                 Intent intent = new Intent(getBaseContext(), VRActivity.class);
                 intent.putExtra("PlayUrl", sphereEditText.getText().toString());
                 startActivity(intent);
+//                Intent intent = new Intent("com.sports.baofeng.browser");
+//                intent.putExtra("url", "http://www.pptv.com");
+//                startActivity(intent);
             }
         });
 

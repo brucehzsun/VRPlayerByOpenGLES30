@@ -43,20 +43,21 @@ public class SphereModel implements IVrModel {
         creatSphere(radius);
 
         String vertexShader =
-                "uniform mat4 uMVPMatrix;" +
-                        "attribute vec3 aPosition;" +
-                        "attribute vec2 aTexCoor;" +
-                        "varying vec2 vTextureCoord;" +
+                "#version 300 es\n" +
+                        "uniform mat4 uMVPMatrix;" +
+                        "in vec3 aPosition;" +
+                        "in vec2 aTexCoor;" +
+                        "out vec2 vTextureCoord;" +
                         "void main() {" +
                         "   gl_Position = uMVPMatrix * vec4(aPosition,1);" +
                         "   vTextureCoord = aTexCoor;" +
                         "}";
 
         String fragmentShader =
-                "#extension GL_OES_EGL_image_external : require\n" +
+                "#version 300 es\n" +
                         "precision mediump float;" +
                         "uniform samplerExternalOES sTexture;" +
-                        "varying vec2 vTextureCoord;" +
+                        "in vec2 vTextureCoord;" +
                         "void main() {" +
                         "   vec4 finalColor=texture2D(sTexture, vTextureCoord);" +
                         "   gl_FragColor = finalColor;" +
