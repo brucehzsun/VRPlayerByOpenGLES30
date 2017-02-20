@@ -59,9 +59,10 @@ public class SphereModel implements IVrModel {
                         "precision mediump float;" +
                         "uniform samplerExternalOES sTexture;" +
                         "in vec2 vTextureCoord;" +
+                        "out vec4 fragColor;"+
                         "void main() {" +
-                        "   vec4 finalColor=texture2D(sTexture, vTextureCoord);" +
-                        "   gl_FragColor = finalColor;" +
+                        "   vec4 finalColor=texture(sTexture, vTextureCoord);" +
+                        "   fragColor = finalColor;" +
                         "}";
 
         initShader(vertexShader, fragmentShader);
