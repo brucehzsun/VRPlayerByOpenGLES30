@@ -55,6 +55,7 @@ public class SphereModel implements IVrModel {
 
         String fragmentShader =
                 "#version 300 es\n" +
+                        "#extension GL_OES_EGL_image_external_essl3 : require\n" +
                         "precision mediump float;" +
                         "uniform samplerExternalOES sTexture;" +
                         "in vec2 vTextureCoord;" +
