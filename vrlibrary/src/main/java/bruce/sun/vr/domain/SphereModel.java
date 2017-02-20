@@ -16,27 +16,27 @@ import bruce.sun.vr.utils.MatrixState;
 import bruce.sun.vr.utils.ShaderUtil;
 
 public class SphereModel implements IVrModel {
-    protected int mProgram;
+    private int mProgram;
 
-    protected int muMVPMatrixHandle;
+    private int muMVPMatrixHandle;
 
-    protected int maPositionHandle;
+    private int maPositionHandle;
 
-    protected int maTexCoorHandle;
+    private int maTexCoorHandle;
 
-    protected FloatBuffer mVertexBuffer;
+    FloatBuffer mVertexBuffer;
 
-    protected FloatBuffer mTexCoorBuffer;
+    FloatBuffer mTexCoorBuffer;
 
-    protected ShortBuffer indexBuffer;
+    ShortBuffer indexBuffer;
 
-    protected static double NV_PI = 3.14159265358979323846;
+    static double NV_PI = 3.14159265358979323846;
 
-    protected int iCount = 0;
+    int iCount = 0;
 
-    protected int sTextureHandle;
+    private int sTextureHandle;
 
-    protected MatrixState matrixState;
+    private MatrixState matrixState;
 
     public SphereModel(Context context, MatrixState matrixState, float radius) {
         this.matrixState = matrixState;
@@ -59,7 +59,7 @@ public class SphereModel implements IVrModel {
                         "precision mediump float;" +
                         "uniform samplerExternalOES sTexture;" +
                         "in vec2 vTextureCoord;" +
-                        "out vec4 fragColor;"+
+                        "out vec4 fragColor;" +
                         "void main() {" +
                         "   vec4 finalColor=texture(sTexture, vTextureCoord);" +
                         "   fragColor = finalColor;" +
@@ -72,7 +72,7 @@ public class SphereModel implements IVrModel {
         return false;
     }
 
-    public void creatSphere(float radius) {
+    private void creatSphere(float radius) {
         int segmentCount = 15;
         int hozSegmentCount = segmentCount * 4;
         int verSegmentCount = segmentCount * 2;
@@ -176,7 +176,7 @@ public class SphereModel implements IVrModel {
         indexBuffer.position(0);
     }
 
-    public void initShader(String vertexShader, String fragmentShader) {
+    private void initShader(String vertexShader, String fragmentShader) {
         mProgram = ShaderUtil.createProgram(vertexShader, fragmentShader);
         maPositionHandle = GLES30.glGetAttribLocation(mProgram, "aPosition");
         maTexCoorHandle = GLES30.glGetAttribLocation(mProgram, "aTexCoor");
